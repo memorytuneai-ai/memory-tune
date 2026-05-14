@@ -58,6 +58,18 @@ app.use(express.json({ limit: "1mb" }));
 app.use(express.static(__dirname));
 app.set("trust proxy", true);
 
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "fazer-minha-musica.html"));
+});
+
+app.get("/my-songs", (req, res) => {
+    res.sendFile(path.join(__dirname, "minhas-musicas.html"));
+});
+
+app.get("/create-song", (req, res) => {
+    res.redirect(301, "/");
+});
+
 app.get("/health", (req, res) => {
     res.status(200).json({ status: "ok" });
 });
@@ -1083,7 +1095,7 @@ function buildMusicReadyEmailHtml(session, baseUrl) {
     const title = escapeHtml(session.title || "Your Memory Tune song is ready");
     const downloadUrl1 = escapeHtml(session.downloadUrl1 || "");
     const downloadUrl2 = escapeHtml(session.downloadUrl2 || "");
-    const libraryUrl = `${baseUrl}/minhas-musicas.html?session_id=${encodeURIComponent(session.sessionId || "")}`;
+    const libraryUrl = `${baseUrl}/my-songs?session_id=${encodeURIComponent(session.sessionId || "")}`;
     const supportUrl = `https://wa.me/5511916609867`;
 
     return `

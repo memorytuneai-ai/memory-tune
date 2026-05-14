@@ -295,7 +295,7 @@ function buildLibraryUrl({ sessionId = currentMusicSessionId, paymentStatus = "s
     if (customerLibraryKey) params.set("customer_key", customerLibraryKey);
     const phone = getNormalizedPreviewPhone();
     if (phone) params.set("customer_phone", phone);
-    return `minhas-musicas.html?${params.toString()}`;
+    return `/my-songs?${params.toString()}`;
 }
 
 function redirectToLibraryPage(options = {}) {

@@ -706,7 +706,7 @@ function renderLibraryItem(item) {
             <div class="library-card-actions">
                 ${paymentButton}
                 ${paidDownloadButtons}
-                <a href="fazer-minha-musica.html" class="btn btn-outline">Create another song</a>
+                <a href="/" class="btn btn-outline">Create another song</a>
             </div>
         </article>
     `;
