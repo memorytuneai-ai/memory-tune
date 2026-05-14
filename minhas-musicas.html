@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>My Songs | Memory Tune</title>
+    <meta name="description"
+        content="Access your previews and completed songs, check payment status, and continue from where you left off.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="fazer-minha-musica.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="favicon/favicon-192.png">
+</head>
+
+<body class="memory-body">
+    <header class="page-header">
+        <div class="container topbar">
+            <a href="fazer-minha-musica.html" class="brand-link">
+                <img src="logo.png?v=memorytune-20260510" alt="Memory Tune" class="brand-logo" onerror="this.style.display='none'">
+                <span>Memory Tune</span>
+            </a>
+            <div class="topbar-links">
+                <a href="fazer-minha-musica.html" class="ghost-link ghost-link-primary">Create a new song</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="library-page">
+        <section class="library-hero">
+            <div class="container">
+                <div class="library-hero-card">
+                    <span class="eyebrow">Your private library</span>
+                    <h1>Your previews and songs, all in one place</h1>
+                    <p>Return to the memories you have already created, check payment progress, and continue your
+                        downloads whenever you need to.</p>
+                    <div class="library-summary" id="librarySummary">
+                        <span><i class="fa-solid fa-clock-rotate-left"></i> Temporary storage for in-progress sessions</span>
+                        <span><i class="fa-solid fa-credit-card"></i> Payment status attached to each item</span>
+                        <span><i class="fa-solid fa-download"></i> Downloads released after approval</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="library-section">
+            <div class="container">
+                <div class="library-toolbar">
+                    <div>
+                        <h2>My songs</h2>
+                        <p id="libraryIntro">Loading your library...</p>
+                    </div>
+                    <a href="fazer-minha-musica.html" class="btn btn-primary">Create a new song</a>
+                </div>
+
+                <form id="libraryRecoveryForm" class="library-recovery-form">
+                    <div class="library-recovery-copy">
+                        <strong>Can't find your song?</strong>
+                        <p>Use the same WhatsApp number from your order to recover both pending and paid sessions.</p>
+                    </div>
+                    <div class="library-recovery-fields">
+                        <label class="library-recovery-field">
+                            <span>Order WhatsApp</span>
+                            <input id="libraryRecoveryPhone" type="tel" inputmode="tel" autocomplete="tel"
+                                placeholder="Example: +44 7700 900123">
+                        </label>
+                        <button type="submit" class="btn btn-outline">Find my songs</button>
+                    </div>
+                </form>
+
+                <p id="libraryStatus" class="builder-status" hidden></p>
+
+                <div id="libraryEmpty" class="library-empty" hidden>
+                    <div>
+                        <i class="fa-solid fa-music"></i>
+                        <h3>No songs found yet</h3>
+                        <p>As soon as you generate your first preview, it will appear here along with its status and
+                            available actions.</p>
+                        <a href="fazer-minha-musica.html" class="btn btn-primary">Create my first song</a>
+                    </div>
+                </div>
+
+                <div id="libraryGrid" class="library-grid" hidden></div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="simple-site-footer">
+        <div class="container">
+            <strong>Memory Tune</strong>
+            <nav aria-label="Site links">
+                <a href="fazer-minha-musica.html">Create a song</a>
+                <a href="minhas-musicas.html">My songs</a>
+                <a href="terms-and-conditions.html">Terms</a>
+                <a href="privacy-policy.html">Privacy</a>
+                <a href="cookie-policy.html">Cookies</a>
+                <a href="delivery-and-support.html">Delivery &amp; support</a>
+                <a href="https://wa.me/5511916609867" target="_blank" rel="noopener">Contact</a>
+            </nav>
+            <p>&copy; 2023-2026 Memory Tune. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="minhas-musicas.js?v=20260513-payment-return"></script>
+</body>
+
+</html>

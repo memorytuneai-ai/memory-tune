@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: memory-tune
+    env: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: DATA_DIR
+        value: /var/data
+      - key: PAYPAL_ENV
+        value: live
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: KIE_SUNO_API_KEY
+        sync: false
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_SHEETS_WEBHOOK_URL
+        sync: false
+      - key: GOOGLE_SHEETS_WEBHOOK_SECRET
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        sync: false
+      - key: RESEND_REPLY_TO_EMAIL
+        sync: false
+      - key: INITIAL_PREVIEW_CREDITS
+        value: 3
+      - key: PURCHASE_REWARD_CREDITS
+        value: 2
+    disk:
+      name: memory-tune-data
+      mountPath: /var/data
+      sizeGB: 1

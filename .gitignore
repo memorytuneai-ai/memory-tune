@@ -1,0 +1,8 @@
+node_modules/
+.env
+memory-tune-server.log
+memory-tune-server-error.log
+.music-orders-report.json
+.paid-music-library.json
+.preview-credit-wallets.json
+.tmp-music-library.json
