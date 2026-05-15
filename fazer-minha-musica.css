@@ -1093,6 +1093,50 @@ a {
     cursor: default;
 }
 
+body.memory-body .musicgen-panel .panel-head h3,
+body.memory-body .musicgen-panel .panel-head p,
+body.memory-body .musicgen-panel .mini-label,
+body.memory-body .musicgen-panel .form-row label,
+body.memory-body .musicgen-panel .preview-credit-box label,
+body.memory-body .musicgen-panel .preview-credit-title,
+body.memory-body .musicgen-panel .preview-credit-box small,
+body.memory-body .musicgen-panel .payment-reassurance span,
+body.memory-body .musicgen-panel .music-preview span,
+body.memory-body .musicgen-panel .preview-unlock-note span,
+body.memory-body .musicgen-panel .preview-unlock-note strong {
+    color: #1d1d1d !important;
+}
+
+body.memory-body .musicgen-panel .panel-head p,
+body.memory-body .musicgen-panel .preview-credit-box small,
+body.memory-body .musicgen-panel .payment-reassurance span,
+body.memory-body .musicgen-panel .preview-unlock-note span {
+    color: rgba(29, 29, 29, 0.78) !important;
+}
+
+body.memory-body .musicgen-panel .mini-label {
+    background: rgba(232, 216, 195, 0.82);
+    border-color: rgba(139, 111, 77, 0.18);
+    color: #8b6f4d !important;
+}
+
+body.memory-body .musicgen-panel select,
+body.memory-body .musicgen-panel input,
+body.memory-body .musicgen-panel textarea {
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid rgba(18, 18, 18, 0.12);
+    color: #121212 !important;
+    -webkit-text-fill-color: #121212;
+    caret-color: #121212;
+}
+
+body.memory-body .musicgen-panel select::placeholder,
+body.memory-body .musicgen-panel input::placeholder,
+body.memory-body .musicgen-panel textarea::placeholder {
+    color: rgba(18, 18, 18, 0.5) !important;
+    -webkit-text-fill-color: rgba(18, 18, 18, 0.5);
+}
+
 .payment-reassurance span::before {
     content: "";
     width: 7px;

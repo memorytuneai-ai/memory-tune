@@ -1518,12 +1518,17 @@ if (generateMusicBtn) {
             return;
         }
         let customerPhone = "";
-        const customerEmail = getNormalizedPreviewEmail();
+        let customerEmail = "";
         try {
             customerPhone = validatePreviewPhone();
+            customerEmail = validatePreviewEmail();
         } catch (error) {
             setMusicStatus(error.message, true);
-            previewPhone?.focus();
+            if (!getNormalizedPreviewPhone()) {
+                previewPhone?.focus();
+            } else {
+                previewEmail?.focus();
+            }
             return;
         }
         if (lastOccasionConfig?.ownLyrics) {
@@ -2098,12 +2103,17 @@ async function openEmbeddedCheckout(payment, analyticsExtra = {}) {
 if (buyPreviewCreditBtn) {
     buyPreviewCreditBtn.addEventListener("click", async () => {
         let customerPhone = "";
-        const customerEmail = getNormalizedPreviewEmail();
+        let customerEmail = "";
         try {
             customerPhone = validatePreviewPhone();
+            customerEmail = validatePreviewEmail();
         } catch (error) {
             setMusicStatus(error.message, true);
-            previewPhone?.focus();
+            if (!getNormalizedPreviewPhone()) {
+                previewPhone?.focus();
+            } else {
+                previewEmail?.focus();
+            }
             return;
         }
 

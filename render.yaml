@@ -12,15 +12,9 @@ services:
         value: 20
       - key: DATA_DIR
         value: /var/data
-      - key: PAYPAL_ENV
-        value: live
       - key: GEMINI_API_KEY
         sync: false
       - key: KIE_SUNO_API_KEY
-        sync: false
-      - key: PAYPAL_CLIENT_ID
-        sync: false
-      - key: PAYPAL_CLIENT_SECRET
         sync: false
       - key: STRIPE_SECRET_KEY
         sync: false
@@ -28,6 +22,8 @@ services:
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
         sync: false
+      - key: CHECKOUT_TITLE
+        value: Memory Tune personalised song
       - key: GOOGLE_SHEETS_WEBHOOK_URL
         sync: false
       - key: GOOGLE_SHEETS_WEBHOOK_SECRET

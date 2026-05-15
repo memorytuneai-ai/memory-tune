@@ -15,17 +15,21 @@ const KIE_SUNO_API_KEY = process.env.KIE_SUNO_API_KEY || process.env.KIE_API_KEY
 const KIE_SUNO_MODEL = process.env.KIE_SUNO_MODEL || "V4_5";
 const KIE_SUNO_CALLBACK_URL = process.env.KIE_SUNO_CALLBACK_URL || "";
 const KIE_SUNO_NEGATIVE_TAGS = process.env.KIE_SUNO_NEGATIVE_TAGS || "";
-const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID || "";
-const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET || "";
-const PAYPAL_ENV = String(process.env.PAYPAL_ENV || "sandbox").toLowerCase() === "live" ? "live" : "sandbox";
-const PAYPAL_PRICE_GBP = Number(process.env.PAYPAL_PRICE_GBP || 14.99);
-const PAYPAL_CURRENCY = process.env.PAYPAL_CURRENCY || "GBP";
-const PAYPAL_TITLE = process.env.PAYPAL_TITLE || "Memory Tune personalised song";
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "";
 const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY || "";
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
-const STRIPE_PRICE_GBP = Number(process.env.STRIPE_PRICE_GBP || PAYPAL_PRICE_GBP || 14.99);
+const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID || "";
+const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET || "";
+const PAYPAL_ENV = String(process.env.PAYPAL_ENV || "sandbox").toLowerCase() === "live" ? "live" : "sandbox";
+const LEGACY_PAYPAL_PRICE_GBP = Number(process.env.PAYPAL_PRICE_GBP || 14.99);
+const LEGACY_PAYPAL_CURRENCY = process.env.PAYPAL_CURRENCY || "GBP";
+const LEGACY_PAYPAL_TITLE = process.env.PAYPAL_TITLE || "Memory Tune personalised song";
+const CHECKOUT_TITLE = process.env.CHECKOUT_TITLE || process.env.STRIPE_TITLE || LEGACY_PAYPAL_TITLE;
+const CHECKOUT_PRICE_GBP = Number(process.env.STRIPE_PRICE_GBP || process.env.PAYPAL_PRICE_GBP || 14.99);
 const STRIPE_CURRENCY = String(process.env.STRIPE_CURRENCY || "gbp").toLowerCase();
+const PAYPAL_PRICE_GBP = LEGACY_PAYPAL_PRICE_GBP;
+const PAYPAL_CURRENCY = LEGACY_PAYPAL_CURRENCY;
+const PAYPAL_TITLE = LEGACY_PAYPAL_TITLE;
 const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "";
 const RESEND_REPLY_TO_EMAIL = process.env.RESEND_REPLY_TO_EMAIL || "";
@@ -79,25 +83,16 @@ app.get("/health", (req, res) => {
 
 app.get("/api/payment/config", (req, res) => {
     res.json({
-        provider: "paypal",
-        client_id: PAYPAL_CLIENT_ID || null,
-        env: PAYPAL_ENV,
-        amount: PAYPAL_PRICE_GBP,
-        currency: PAYPAL_CURRENCY,
-        title: PAYPAL_TITLE,
-        paypal: {
-            client_id: PAYPAL_CLIENT_ID || null,
-            env: PAYPAL_ENV,
-            amount: PAYPAL_PRICE_GBP,
-            currency: PAYPAL_CURRENCY,
-            title: PAYPAL_TITLE,
-        },
+        provider: "stripe",
+        amount: CHECKOUT_PRICE_GBP,
+        currency: STRIPE_CURRENCY,
+        title: CHECKOUT_TITLE,
         stripe: {
             enabled: Boolean(STRIPE_SECRET_KEY),
             publishable_key: STRIPE_PUBLISHABLE_KEY || null,
-            amount: STRIPE_PRICE_GBP,
+            amount: CHECKOUT_PRICE_GBP,
             currency: STRIPE_CURRENCY,
-            title: PAYPAL_TITLE,
+            title: CHECKOUT_TITLE,
         },
     });
 });
@@ -130,7 +125,7 @@ async function applyStripeCheckoutSuccess(sessionId, checkoutSession, req) {
             existingSession.customerEmail ||
             ""
         ),
-        title: existingSession.title || PAYPAL_TITLE,
+        title: existingSession.title || CHECKOUT_TITLE,
         subtitle: "Card checkout started to unlock song production.",
         badge: "Card checkout started",
         stripeCheckoutSessionId: checkoutSession.id,
@@ -367,7 +362,7 @@ function persistOrderReports() {
 }
 
 function getOrderAmountBrl(existing = {}, payload = {}) {
-    const amount = Number(payload.amountBrl ?? existing.amountBrl ?? PAYPAL_PRICE_GBP ?? 14.99);
+    const amount = Number(payload.amountBrl ?? existing.amountBrl ?? CHECKOUT_PRICE_GBP ?? 14.99);
     return Number.isFinite(amount) && amount > 0 ? amount : 14.99;
 }
 
@@ -1954,7 +1949,7 @@ app.post("/api/payment/stripe/create", async (req, res) => {
         if (!STRIPE_SECRET_KEY) {
             return res.status(400).json({ error: "Stripe is not configured in the environment." });
         }
-        if (!STRIPE_PRICE_GBP || Number.isNaN(STRIPE_PRICE_GBP)) {
+        if (!CHECKOUT_PRICE_GBP || Number.isNaN(CHECKOUT_PRICE_GBP)) {
             return res.status(400).json({ error: "STRIPE_PRICE_GBP is not configured in the environment." });
         }
 
@@ -1979,7 +1974,7 @@ app.post("/api/payment/stripe/create", async (req, res) => {
             clientName: clientName || "",
             customerPhone: normalizedPhone,
             customerEmail: normalizedEmail,
-            title: PAYPAL_TITLE,
+            title: CHECKOUT_TITLE,
             subtitle: "Card checkout started to unlock song production.",
             badge: "Card checkout started",
             trafficSource: normalizeTrafficSource(trafficSource),
@@ -1998,9 +1993,9 @@ app.post("/api/payment/stripe/create", async (req, res) => {
                     quantity: 1,
                     price_data: {
                         currency: STRIPE_CURRENCY,
-                        unit_amount: Math.round(STRIPE_PRICE_GBP * 100),
+                        unit_amount: Math.round(CHECKOUT_PRICE_GBP * 100),
                         product_data: {
-                            name: PAYPAL_TITLE,
+                            name: CHECKOUT_TITLE,
                             description: "Personalised Memory Tune song checkout",
                         },
                     },
