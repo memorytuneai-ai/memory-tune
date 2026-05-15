@@ -621,14 +621,10 @@ function renderOwnLyricsFlow(config) {
     resultEmpty.hidden = true;
     resultContent.hidden = false;
     resultContent.classList.add("own-lyrics-mode");
+    resetGeneratedMusicState({ clearSession: true });
 
     if (musicGenPanel) {
         musicGenPanel.hidden = false;
-        if (musicDownloads) musicDownloads.hidden = true;
-        if (musicPreviews) musicPreviews.hidden = true;
-        if (previewAudio1) previewAudio1.src = "";
-        if (previewAudio2) previewAudio2.src = "";
-        setMusicStatus("");
     }
 
     dynamicFields.querySelector("#ownLyricsClientName")?.addEventListener("input", (event) => {
@@ -789,13 +785,9 @@ function renderPreview(preview, config, values) {
     resultEmpty.hidden = true;
     resultContent.hidden = false;
     resultContent.scrollIntoView({ behavior: "smooth", block: "start" });
+    resetGeneratedMusicState({ clearSession: true });
     if (musicGenPanel) {
         musicGenPanel.hidden = false;
-        if (musicDownloads) musicDownloads.hidden = true;
-        if (musicPreviews) musicPreviews.hidden = true;
-        if (previewAudio1) previewAudio1.src = "";
-        if (previewAudio2) previewAudio2.src = "";
-        setMusicStatus("");
     }
 }
 
@@ -1034,7 +1026,7 @@ async function restoreGeneratedMusicSession() {
         const localItems = getLocalLibraryItems();
         const localCurrent = currentMusicSessionId
             ? localItems.find((item) => item.session_id === currentMusicSessionId)
-            : localItems[0];
+            : null;
 
         if (localCurrent) {
             await hydrateSavedMusicSession(localCurrent);
@@ -1193,6 +1185,38 @@ function ensurePreviewCreditFields() {
 }
 
 ensurePreviewCreditFields();
+
+function resetGeneratedMusicState({ clearSession = false } = {}) {
+    isMusicGenerating = false;
+    hasMusicReady = false;
+    paymentApproved = false;
+    previewPlaybackUnlocked = true;
+    previewUrl1 = "";
+    previewUrl2 = "";
+    downloadUrl1 = "";
+    downloadUrl2 = "";
+
+    if (clearSession) {
+        setCurrentMusicSessionId("");
+    }
+
+    if (musicDownloads) musicDownloads.hidden = true;
+    if (musicPreviews) musicPreviews.hidden = true;
+    if (buyPreviewCreditBtn) buyPreviewCreditBtn.hidden = true;
+    if (musicUnlockWarning) musicUnlockWarning.hidden = true;
+    if (confirmPaymentBtn) confirmPaymentBtn.hidden = true;
+    if (downloadBothBtn) {
+        downloadBothBtn.textContent = "Unlock my full song for £14.99";
+        downloadBothBtn.classList.remove("is-waiting", "is-ready");
+        downloadBothBtn.disabled = false;
+    }
+    if (downloadVersion1Btn) downloadVersion1Btn.hidden = true;
+    if (downloadVersion2Btn) downloadVersion2Btn.hidden = true;
+    if (previewAudio1) previewAudio1.src = "";
+    if (previewAudio2) previewAudio2.src = "";
+    applyPreviewPlaybackState();
+    setMusicStatus("");
+}
 
 if (testModeBadge) {
     testModeBadge.hidden = !isTestMode;
