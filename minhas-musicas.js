@@ -716,10 +716,7 @@ function renderLibraryItem(item) {
     const previewUrl2 = item.preview_url_2 || item.download_url_2 || "";
     const paymentButton = item.paid
         ? ""
-        : `
-            <button type="button" class="btn btn-primary" data-action="primary">Continue payment</button>
-            ${stripeCheckoutEnabled ? `<button type="button" class="btn btn-outline" data-action="stripe">Pay with card</button>` : ""}
-          `;
+        : `${stripeCheckoutEnabled ? `<button type="button" class="btn btn-primary" data-action="primary">Complete payment</button>` : ""}`;
     const paidDownloadButtons = item.paid
         ? `
                 <button type="button" class="btn btn-outline" data-action="download-1">Download version 1</button>
@@ -766,7 +763,6 @@ function bindLibraryActions() {
     libraryGrid.querySelectorAll(".library-card").forEach((card) => {
         const sessionId = card.dataset.sessionId;
         const button = card.querySelector('[data-action="primary"]');
-        const stripeButton = card.querySelector('[data-action="stripe"]');
         const download1Btn = card.querySelector('[data-action="download-1"]');
         const download2Btn = card.querySelector('[data-action="download-2"]');
         const audios = card.querySelectorAll("audio");
@@ -787,54 +783,13 @@ function bindLibraryActions() {
 
             button.disabled = true;
             try {
-                if (item.paid) {
-                    return;
-                }
-
-                const payment = await startCheckoutForLibraryItem(sessionId, item);
-                setLibraryStatus("Payment started. As soon as approval happens, this library will update.");
-
-                const start = Date.now();
-                const interval = setInterval(async () => {
-                    try {
-                        const status = await fetchPaymentStatus(sessionId);
-                        if (status?.paid) {
-                            clearInterval(interval);
-                            upsertLocalLibraryItem({
-                                ...item,
-                                paid: true,
-                                download_url_1: status.download_url_1 || "",
-                                download_url_2: status.download_url_2 || "",
-                            });
-                            await loadLibrary();
-                            setLibraryStatus("Payment confirmed. Your library has been updated.");
-                        } else if (Date.now() - start > 5 * 60 * 1000) {
-                            clearInterval(interval);
-                        }
-                    } catch (error) {
-                        clearInterval(interval);
-                    }
-                }, 5000);
-            } catch (error) {
-                setLibraryStatus(error.message || "We could not continue the payment.", true);
-            } finally {
-                button.disabled = false;
-            }
-        });
-
-        stripeButton?.addEventListener("click", async () => {
-            const item = currentLibraryItems.find((entry) => entry.session_id === sessionId);
-            if (!item) return;
-
-            stripeButton.disabled = true;
-            try {
                 if (item.paid) return;
                 setLibraryStatus("Redirecting you to the secure card checkout...");
                 await startStripeCheckoutForLibraryItem(sessionId);
             } catch (error) {
-                setLibraryStatus(error.message || "We could not continue to the Stripe checkout.", true);
+                setLibraryStatus(error.message || "We could not continue the payment.", true);
             } finally {
-                stripeButton.disabled = false;
+                button.disabled = false;
             }
         });
 
