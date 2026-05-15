@@ -257,6 +257,7 @@ let previewUrl1 = "";
 let previewUrl2 = "";
 let paymentApproved = false;
 let previewPlaybackUnlocked = true;
+let stripeCheckoutEnabled = false;
 const LOCAL_LIBRARY_KEY = "ss_music_library_cache";
 const LOCAL_LIBRARY_TTL_MS = 24 * 60 * 60 * 1000;
 const customerLibraryKey = (() => {
@@ -1314,12 +1315,12 @@ function updatePaidDownloadActions() {
     }
 
     if (downloadBothStripeBtn) {
-        downloadBothStripeBtn.hidden = hasPaidDownloads;
+        downloadBothStripeBtn.hidden = hasPaidDownloads || !stripeCheckoutEnabled;
         downloadBothStripeBtn.disabled = false;
     }
 
     if (buyPreviewCreditStripeBtn && buyPreviewCreditBtn) {
-        buyPreviewCreditStripeBtn.hidden = buyPreviewCreditBtn.hidden;
+        buyPreviewCreditStripeBtn.hidden = buyPreviewCreditBtn.hidden || !stripeCheckoutEnabled;
         buyPreviewCreditStripeBtn.disabled = false;
     }
 
@@ -1975,6 +1976,13 @@ async function fetchPaymentConfig() {
     return paymentConfigPromise;
 }
 
+async function syncStripeCheckoutAvailability() {
+    const config = await fetchPaymentConfig().catch(() => null);
+    stripeCheckoutEnabled = Boolean(config?.stripe?.enabled);
+    updatePaidDownloadActions();
+    return stripeCheckoutEnabled;
+}
+
 async function createStripeCheckout(extra = {}) {
     const response = await fetch(apiUrl("/api/payment/stripe/create"), {
         method: "POST",
@@ -1997,11 +2005,10 @@ async function createStripeCheckout(extra = {}) {
 }
 
 async function startStripeCheckout(analyticsExtra = {}, extraPayload = {}) {
-    const config = await fetchPaymentConfig();
-    if (!config?.stripe?.enabled) {
+    const enabled = await syncStripeCheckoutAvailability();
+    if (!enabled) {
         throw new Error("Stripe is not available right now.");
     }
-
     const checkout = await createStripeCheckout(extraPayload);
     if (!checkout?.checkout_url) {
         throw new Error("We could not generate the Stripe checkout link.");
@@ -2015,6 +2022,8 @@ async function startStripeCheckout(analyticsExtra = {}, extraPayload = {}) {
     setMusicStatus("Redirecting you to the secure card checkout...");
     window.location.assign(checkout.checkout_url);
 }
+
+syncStripeCheckoutAvailability().catch(() => {});
 
 async function loadPayPalSdk(config) {
     if (window.paypal) return window.paypal;

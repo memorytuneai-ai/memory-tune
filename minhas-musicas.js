@@ -9,6 +9,7 @@ const CUSTOMER_LIBRARY_KEY_STORAGE = "ss_customer_library_key";
 const CUSTOMER_PHONE_STORAGE_KEY = "ss_customer_phone";
 const CURRENT_SESSION_KEY = "ss_current_music_session";
 const PREVIEW_SECONDS = 40;
+let stripeCheckoutEnabled = false;
 
 function normalizeVoiceGender(value = "") {
     const normalized = String(value || "").trim().toLowerCase();
@@ -717,7 +718,7 @@ function renderLibraryItem(item) {
         ? ""
         : `
             <button type="button" class="btn btn-primary" data-action="primary">Continue payment</button>
-            <button type="button" class="btn btn-outline" data-action="stripe">Pay with card</button>
+            ${stripeCheckoutEnabled ? `<button type="button" class="btn btn-outline" data-action="stripe">Pay with card</button>` : ""}
           `;
     const paidDownloadButtons = item.paid
         ? `
@@ -874,6 +875,8 @@ async function loadLibrary() {
     const paymentStatus = String(getQueryValue("payment") || getQueryValue("pagamento") || "").trim();
     const stripeSessionId = String(getQueryValue("stripe_session_id") || "").trim();
     const shouldRetryAfterPayment = Boolean(sessionId && paymentStatus);
+    const paymentConfig = await fetchPaymentConfig().catch(() => null);
+    stripeCheckoutEnabled = Boolean(paymentConfig?.stripe?.enabled);
 
     if (sessionId && stripeSessionId) {
         try {
