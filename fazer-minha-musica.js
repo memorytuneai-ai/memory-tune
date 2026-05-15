@@ -196,7 +196,6 @@ const OCCASIONS = {
     "romantic-song": {
         label: "Romantic Song",
         type: "Romance",
-        image: "romantic-song-card.png",
         intro: "A timeless romantic song shaped around how your story began, what deepened it, and the details that make this love feel unmistakably yours.",
         whatsappNumber: GENERAL_WHATSAPP_NUMBER,
         fields: [
