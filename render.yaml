@@ -26,6 +26,8 @@ services:
         sync: false
       - key: STRIPE_PUBLISHABLE_KEY
         sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
       - key: GOOGLE_SHEETS_WEBHOOK_URL
         sync: false
       - key: GOOGLE_SHEETS_WEBHOOK_SECRET

@@ -23,6 +23,7 @@ const PAYPAL_CURRENCY = process.env.PAYPAL_CURRENCY || "GBP";
 const PAYPAL_TITLE = process.env.PAYPAL_TITLE || "Memory Tune personalised song";
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "";
 const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY || "";
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 const STRIPE_PRICE_GBP = Number(process.env.STRIPE_PRICE_GBP || PAYPAL_PRICE_GBP || 14.99);
 const STRIPE_CURRENCY = String(process.env.STRIPE_CURRENCY || "gbp").toLowerCase();
 const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
@@ -59,10 +60,6 @@ try {
 } catch (error) {
     console.error("Erro ao preparar pasta de dados persistentes", error);
 }
-
-app.use(express.json({ limit: "1mb" }));
-app.use(express.static(__dirname));
-app.set("trust proxy", true);
 
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "fazer-minha-musica.html"));
@@ -114,6 +111,89 @@ function getStripeClient() {
     }
     return stripeClient;
 }
+
+async function applyStripeCheckoutSuccess(sessionId, checkoutSession, req) {
+    if (!sessionId || !checkoutSession) return null;
+
+    const existingSession = getTempMusicSession(sessionId) || getPaidMusicSession(sessionId) || {};
+    upsertTempMusicSession(sessionId, {
+        customerKey: existingSession.customerKey || checkoutSession.metadata?.customer_key || "",
+        clientName: existingSession.clientName || checkoutSession.metadata?.client_name || "",
+        customerPhone: normalizeWhatsAppNumber(
+            existingSession.customerPhone ||
+            checkoutSession.metadata?.customer_phone ||
+            ""
+        ),
+        customerEmail: normalizeEmailAddress(
+            checkoutSession.customer_details?.email ||
+            checkoutSession.customer_email ||
+            existingSession.customerEmail ||
+            ""
+        ),
+        title: existingSession.title || PAYPAL_TITLE,
+        subtitle: "Card checkout started to unlock song production.",
+        badge: "Card checkout started",
+        stripeCheckoutSessionId: checkoutSession.id,
+        stripeCheckoutStatus: checkoutSession.status || null,
+        stripePaymentStatus: checkoutSession.payment_status || null,
+    });
+
+    if (checkoutSession.payment_status === "paid") {
+        const paymentIntentId =
+            typeof checkoutSession.payment_intent === "string"
+                ? checkoutSession.payment_intent
+                : checkoutSession.payment_intent?.id || checkoutSession.id;
+        markPaid(sessionId, { paymentId: paymentIntentId, status: "STRIPE_PAID" });
+    }
+
+    const latest = getPaidMusicSession(sessionId) || getTempMusicSession(sessionId);
+    if (latest?.paid) {
+        const baseUrl = getBaseUrl(req);
+        setTimeout(() => {
+            sendMusicReadyEmailIfEligible(sessionId, baseUrl).catch((error) => {
+                console.error("Error sending automatic music-ready email after Stripe event", error);
+            });
+        }, 0);
+    }
+
+    return latest;
+}
+
+app.post("/api/payment/stripe/webhook", express.raw({ type: "application/json" }), async (req, res) => {
+    if (!STRIPE_SECRET_KEY || !STRIPE_WEBHOOK_SECRET) {
+        return res.status(400).send("Stripe webhook is not configured.");
+    }
+
+    const signature = req.headers["stripe-signature"];
+    if (!signature) {
+        return res.status(400).send("Missing Stripe signature.");
+    }
+
+    let event;
+    try {
+        const stripe = getStripeClient();
+        event = stripe.webhooks.constructEvent(req.body, signature, STRIPE_WEBHOOK_SECRET);
+    } catch (error) {
+        console.error("Stripe webhook signature verification failed", error);
+        return res.status(400).send(`Webhook Error: ${error.message}`);
+    }
+
+    try {
+        if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
+            const checkoutSession = event.data.object;
+            const sessionId = String(checkoutSession.metadata?.session_id || "").trim();
+            await applyStripeCheckoutSuccess(sessionId, checkoutSession, req);
+        }
+        return res.json({ received: true });
+    } catch (error) {
+        console.error("Stripe webhook processing failed", error);
+        return res.status(500).send("Webhook processing failed.");
+    }
+});
+
+app.use(express.json({ limit: "1mb" }));
+app.use(express.static(__dirname));
+app.set("trust proxy", true);
 
 function getPayPalBaseUrl() {
     return PAYPAL_ENV === "live"
@@ -1582,39 +1662,7 @@ async function syncStripeCheckoutForSession(sessionId, req, providedStripeSessio
     const checkoutSession = await stripe.checkout.sessions.retrieve(stripeSessionId, {
         expand: ["payment_intent"],
     });
-
-    upsertTempMusicSession(sessionId, {
-        stripeCheckoutSessionId: checkoutSession.id,
-        stripeCheckoutStatus: checkoutSession.status || null,
-        stripePaymentStatus: checkoutSession.payment_status || null,
-        customerEmail: normalizeEmailAddress(
-            checkoutSession.customer_details?.email ||
-            checkoutSession.customer_email ||
-            existingSession.customerEmail ||
-            ""
-        ),
-    });
-
-    const isPaid = checkoutSession.payment_status === "paid";
-    if (isPaid) {
-        const paymentIntentId =
-            typeof checkoutSession.payment_intent === "string"
-                ? checkoutSession.payment_intent
-                : checkoutSession.payment_intent?.id || checkoutSession.id;
-        markPaid(sessionId, { paymentId: paymentIntentId, status: "STRIPE_PAID" });
-    }
-
-    const latest = getPaidMusicSession(sessionId) || getTempMusicSession(sessionId);
-    if (latest?.paid) {
-        const baseUrl = getBaseUrl(req);
-        setTimeout(() => {
-            sendMusicReadyEmailIfEligible(sessionId, baseUrl).catch((error) => {
-                console.error("Error sending automatic music-ready email after Stripe sync", error);
-            });
-        }, 0);
-    }
-
-    return latest;
+    return applyStripeCheckoutSuccess(sessionId, checkoutSession, req);
 }
 
 app.post("/api/music-session/save", (req, res) => {
@@ -2015,36 +2063,7 @@ app.post("/api/payment/stripe/confirm", async (req, res) => {
             return res.status(400).json({ error: "session_id is required to confirm Stripe payment." });
         }
 
-        const resolvedExisting = getTempMusicSession(sessionId) || getPaidMusicSession(sessionId) || {};
-        upsertTempMusicSession(sessionId, {
-            customerKey: resolvedExisting.customerKey || checkoutSession.metadata?.customer_key || "",
-            clientName: resolvedExisting.clientName || checkoutSession.metadata?.client_name || "",
-            customerPhone: normalizeWhatsAppNumber(
-                resolvedExisting.customerPhone ||
-                checkoutSession.metadata?.customer_phone ||
-                ""
-            ),
-            customerEmail: normalizeEmailAddress(
-                checkoutSession.customer_details?.email ||
-                checkoutSession.customer_email ||
-                resolvedExisting.customerEmail ||
-                ""
-            ),
-            title: resolvedExisting.title || PAYPAL_TITLE,
-            subtitle: "Card checkout started to unlock song production.",
-            badge: "Card checkout started",
-            stripeCheckoutSessionId: checkoutSession.id,
-            stripeCheckoutStatus: checkoutSession.status || null,
-            stripePaymentStatus: checkoutSession.payment_status || null,
-        });
-
-        if (checkoutSession.payment_status === "paid") {
-            const paymentIntentId =
-                typeof checkoutSession.payment_intent === "string"
-                    ? checkoutSession.payment_intent
-                    : checkoutSession.payment_intent?.id || checkoutSession.id;
-            markPaid(sessionId, { paymentId: paymentIntentId, status: "STRIPE_PAID" });
-        }
+        await applyStripeCheckoutSuccess(sessionId, checkoutSession, req);
 
         const paid = paidSessions.get(sessionId);
         const tempSession = getTempMusicSession(sessionId);
@@ -2053,15 +2072,6 @@ app.post("/api/payment/stripe/confirm", async (req, res) => {
         const isPaid = Boolean(paid?.paid || paidSession?.paid || tempSession?.paid);
         const phone = session?.customerPhone || tempSession?.customerPhone || "";
         const wallet = phone ? previewCreditWallets.get(phone) : null;
-
-        if (isPaid) {
-            const baseUrl = getBaseUrl(req);
-            setTimeout(() => {
-                sendMusicReadyEmailIfEligible(sessionId, baseUrl).catch((error) => {
-                    console.error("Erro ao enviar e-mail automatico apos confirmacao Stripe", error);
-                });
-            }, 0);
-        }
 
         return res.json({
             paid: isPaid,
