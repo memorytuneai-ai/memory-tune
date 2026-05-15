@@ -1791,16 +1791,6 @@ app.post("/api/payment/create", async (req, res) => {
                     },
                 },
             ],
-            payment_source: {
-                paypal: {
-                    experience_context: {
-                        payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
-                        user_action: "PAY_NOW",
-                        brand_name: "Memory Tune",
-                        shipping_preference: "NO_SHIPPING",
-                    },
-                },
-            },
         };
 
         const response = await fetch(`${getPayPalBaseUrl()}/v2/checkout/orders`, {
