@@ -318,6 +318,27 @@ async function createPayment(sessionId) {
     return data;
 }
 
+async function createStripeCheckout(sessionId) {
+    const item = currentLibraryItems.find((entry) => entry.session_id === sessionId) || {};
+    const response = await fetch(apiUrl("/api/payment/stripe/create"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            session_id: sessionId,
+            customer_key: item.customer_key || getCustomerLibraryKey(),
+            traffic_source: item.traffic_source || null,
+            client_name: item.client_name || "",
+            customer_phone: item.customer_phone || "",
+            customer_email: item.customer_email || "",
+        }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+        throw new Error(data?.error || "We could not start the Stripe checkout.");
+    }
+    return data;
+}
+
 async function startCheckoutForLibraryItem(sessionId, item) {
     const payment = await createPayment(sessionId);
     const embeddedOpened = await openEmbeddedCheckout(
@@ -343,6 +364,15 @@ async function startCheckoutForLibraryItem(sessionId, item) {
     }
 
     return payment;
+}
+
+async function startStripeCheckoutForLibraryItem(sessionId) {
+    const checkout = await createStripeCheckout(sessionId);
+    if (!checkout?.checkout_url) {
+        throw new Error("We could not generate the Stripe checkout link.");
+    }
+    window.location.assign(checkout.checkout_url);
+    return checkout;
 }
 
 let paymentConfigPromise = null;
@@ -613,6 +643,22 @@ async function fetchPaymentStatus(sessionId) {
     return data;
 }
 
+async function confirmStripePayment(sessionId, stripeSessionId) {
+    const response = await fetch(apiUrl("/api/payment/stripe/confirm"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            session_id: sessionId,
+            stripe_session_id: stripeSessionId,
+        }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+        throw new Error(data?.error || "We could not confirm the Stripe payment.");
+    }
+    return data;
+}
+
 async function getApprovedDownloadUrl(sessionId, version) {
     const status = await fetchPaymentStatus(sessionId);
     const url = version === 1
@@ -669,7 +715,10 @@ function renderLibraryItem(item) {
     const previewUrl2 = item.preview_url_2 || item.download_url_2 || "";
     const paymentButton = item.paid
         ? ""
-        : `<button type="button" class="btn btn-primary" data-action="primary">Continue payment</button>`;
+        : `
+            <button type="button" class="btn btn-primary" data-action="primary">Continue payment</button>
+            <button type="button" class="btn btn-outline" data-action="stripe">Pay with card</button>
+          `;
     const paidDownloadButtons = item.paid
         ? `
                 <button type="button" class="btn btn-outline" data-action="download-1">Download version 1</button>
@@ -716,6 +765,7 @@ function bindLibraryActions() {
     libraryGrid.querySelectorAll(".library-card").forEach((card) => {
         const sessionId = card.dataset.sessionId;
         const button = card.querySelector('[data-action="primary"]');
+        const stripeButton = card.querySelector('[data-action="stripe"]');
         const download1Btn = card.querySelector('[data-action="download-1"]');
         const download2Btn = card.querySelector('[data-action="download-2"]');
         const audios = card.querySelectorAll("audio");
@@ -771,6 +821,22 @@ function bindLibraryActions() {
             }
         });
 
+        stripeButton?.addEventListener("click", async () => {
+            const item = currentLibraryItems.find((entry) => entry.session_id === sessionId);
+            if (!item) return;
+
+            stripeButton.disabled = true;
+            try {
+                if (item.paid) return;
+                setLibraryStatus("Redirecting you to the secure card checkout...");
+                await startStripeCheckoutForLibraryItem(sessionId);
+            } catch (error) {
+                setLibraryStatus(error.message || "We could not continue to the Stripe checkout.", true);
+            } finally {
+                stripeButton.disabled = false;
+            }
+        });
+
         download1Btn?.addEventListener("click", async () => {
             download1Btn.disabled = true;
             try {
@@ -805,8 +871,18 @@ async function loadLibrary() {
     let customerKey = getCustomerLibraryKey();
     let customerPhone = getCustomerPhone();
     const sessionId = String(getQueryValue("session_id") || getCurrentSessionSnapshot()?.session_id || "").trim();
-    const paymentStatus = String(getQueryValue("pagamento") || "").trim();
+    const paymentStatus = String(getQueryValue("payment") || getQueryValue("pagamento") || "").trim();
+    const stripeSessionId = String(getQueryValue("stripe_session_id") || "").trim();
     const shouldRetryAfterPayment = Boolean(sessionId && paymentStatus);
+
+    if (sessionId && stripeSessionId) {
+        try {
+            await confirmStripePayment(sessionId, stripeSessionId);
+            setLibraryStatus("Stripe payment identified. We are updating your library.");
+        } catch (error) {
+            setLibraryStatus(error.message || "We could not confirm your Stripe payment yet.", true);
+        }
+    }
 
     const attemptLoad = async () => {
         const identifiers = await resolveSessionIdentifiers(sessionId, customerKey, customerPhone);

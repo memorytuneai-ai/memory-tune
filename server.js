@@ -4,6 +4,7 @@ const express = require("express");
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
+const Stripe = require("stripe");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,6 +21,10 @@ const PAYPAL_ENV = String(process.env.PAYPAL_ENV || "sandbox").toLowerCase() ===
 const PAYPAL_PRICE_GBP = Number(process.env.PAYPAL_PRICE_GBP || 14.99);
 const PAYPAL_CURRENCY = process.env.PAYPAL_CURRENCY || "GBP";
 const PAYPAL_TITLE = process.env.PAYPAL_TITLE || "Memory Tune personalised song";
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "";
+const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY || "";
+const STRIPE_PRICE_GBP = Number(process.env.STRIPE_PRICE_GBP || PAYPAL_PRICE_GBP || 14.99);
+const STRIPE_CURRENCY = String(process.env.STRIPE_CURRENCY || "gbp").toLowerCase();
 const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "";
 const RESEND_REPLY_TO_EMAIL = process.env.RESEND_REPLY_TO_EMAIL || "";
@@ -41,6 +46,7 @@ const TEMP_MUSIC_TTL_MS = 24 * 60 * 60 * 1000;
 const PAID_MUSIC_TTL_MS = 15 * 24 * 60 * 60 * 1000;
 const INITIAL_PREVIEW_CREDITS = Number(process.env.INITIAL_PREVIEW_CREDITS || 3);
 const PURCHASE_REWARD_CREDITS = Number(process.env.PURCHASE_REWARD_CREDITS || 2);
+let stripeClient = null;
 const WHITELISTED_PREVIEW_PHONES = new Set(
     String(process.env.PREVIEW_WHITELIST_PHONES || "")
         .split(",")
@@ -82,8 +88,32 @@ app.get("/api/payment/config", (req, res) => {
         amount: PAYPAL_PRICE_GBP,
         currency: PAYPAL_CURRENCY,
         title: PAYPAL_TITLE,
+        paypal: {
+            client_id: PAYPAL_CLIENT_ID || null,
+            env: PAYPAL_ENV,
+            amount: PAYPAL_PRICE_GBP,
+            currency: PAYPAL_CURRENCY,
+            title: PAYPAL_TITLE,
+        },
+        stripe: {
+            enabled: Boolean(STRIPE_SECRET_KEY),
+            publishable_key: STRIPE_PUBLISHABLE_KEY || null,
+            amount: STRIPE_PRICE_GBP,
+            currency: STRIPE_CURRENCY,
+            title: PAYPAL_TITLE,
+        },
     });
 });
+
+function getStripeClient() {
+    if (!STRIPE_SECRET_KEY) {
+        throw new Error("STRIPE_SECRET_KEY not configured.");
+    }
+    if (!stripeClient) {
+        stripeClient = new Stripe(STRIPE_SECRET_KEY);
+    }
+    return stripeClient;
+}
 
 function getPayPalBaseUrl() {
     return PAYPAL_ENV === "live"
@@ -579,6 +609,9 @@ function serializeMusicSession(session, sessionId) {
         paid_at: session.paidAt || null,
         payment_id: session.paymentId || null,
         payment_status: session.status || null,
+        stripe_checkout_session_id: session.stripeCheckoutSessionId || null,
+        stripe_checkout_status: session.stripeCheckoutStatus || null,
+        stripe_payment_status: session.stripePaymentStatus || null,
         credit_rewarded: Boolean(session.creditRewarded),
         is_permanent: false,
     };
@@ -1536,6 +1569,54 @@ async function syncPayPalOrderForSession(sessionId, req) {
     return latest;
 }
 
+async function syncStripeCheckoutForSession(sessionId, req, providedStripeSessionId = "") {
+    if (!STRIPE_SECRET_KEY || !sessionId) return null;
+
+    const existingSession = getTempMusicSession(sessionId) || getPaidMusicSession(sessionId);
+    const stripeSessionId = String(providedStripeSessionId || existingSession?.stripeCheckoutSessionId || "").trim();
+    if (!existingSession || existingSession.paid || !stripeSessionId) {
+        return existingSession || null;
+    }
+
+    const stripe = getStripeClient();
+    const checkoutSession = await stripe.checkout.sessions.retrieve(stripeSessionId, {
+        expand: ["payment_intent"],
+    });
+
+    upsertTempMusicSession(sessionId, {
+        stripeCheckoutSessionId: checkoutSession.id,
+        stripeCheckoutStatus: checkoutSession.status || null,
+        stripePaymentStatus: checkoutSession.payment_status || null,
+        customerEmail: normalizeEmailAddress(
+            checkoutSession.customer_details?.email ||
+            checkoutSession.customer_email ||
+            existingSession.customerEmail ||
+            ""
+        ),
+    });
+
+    const isPaid = checkoutSession.payment_status === "paid";
+    if (isPaid) {
+        const paymentIntentId =
+            typeof checkoutSession.payment_intent === "string"
+                ? checkoutSession.payment_intent
+                : checkoutSession.payment_intent?.id || checkoutSession.id;
+        markPaid(sessionId, { paymentId: paymentIntentId, status: "STRIPE_PAID" });
+    }
+
+    const latest = getPaidMusicSession(sessionId) || getTempMusicSession(sessionId);
+    if (latest?.paid) {
+        const baseUrl = getBaseUrl(req);
+        setTimeout(() => {
+            sendMusicReadyEmailIfEligible(sessionId, baseUrl).catch((error) => {
+                console.error("Error sending automatic music-ready email after Stripe sync", error);
+            });
+        }, 0);
+    }
+
+    return latest;
+}
+
 app.post("/api/music-session/save", (req, res) => {
     try {
         const {
@@ -1820,6 +1901,185 @@ app.post("/api/payment/create", async (req, res) => {
     }
 });
 
+app.post("/api/payment/stripe/create", async (req, res) => {
+    try {
+        if (!STRIPE_SECRET_KEY) {
+            return res.status(400).json({ error: "Stripe is not configured in the environment." });
+        }
+        if (!STRIPE_PRICE_GBP || Number.isNaN(STRIPE_PRICE_GBP)) {
+            return res.status(400).json({ error: "STRIPE_PRICE_GBP is not configured in the environment." });
+        }
+
+        const {
+            session_id: sessionId,
+            customer_key: customerKey,
+            client_name: clientName,
+            customer_phone: customerPhone,
+            customer_email: customerEmail,
+            traffic_source: trafficSource,
+        } = req.body || {};
+
+        if (!sessionId) {
+            return res.status(400).json({ error: "session_id is required." });
+        }
+
+        const normalizedPhone = normalizeWhatsAppNumber(customerPhone) || "";
+        const normalizedEmail = normalizeEmailAddress(customerEmail) || "";
+
+        upsertTempMusicSession(sessionId, {
+            customerKey: customerKey || "",
+            clientName: clientName || "",
+            customerPhone: normalizedPhone,
+            customerEmail: normalizedEmail,
+            title: PAYPAL_TITLE,
+            subtitle: "Card checkout started to unlock song production.",
+            badge: "Card checkout started",
+            trafficSource: normalizeTrafficSource(trafficSource),
+        });
+
+        const baseUrl = getBaseUrl(req);
+        const stripe = getStripeClient();
+        const checkoutSession = await stripe.checkout.sessions.create({
+            mode: "payment",
+            success_url: `${baseUrl}/my-songs?session_id=${encodeURIComponent(sessionId)}&stripe_session_id={CHECKOUT_SESSION_ID}&payment=stripe_success`,
+            cancel_url: `${baseUrl}/my-songs?session_id=${encodeURIComponent(sessionId)}&payment=stripe_cancel`,
+            billing_address_collection: "auto",
+            customer_email: normalizedEmail || undefined,
+            line_items: [
+                {
+                    quantity: 1,
+                    price_data: {
+                        currency: STRIPE_CURRENCY,
+                        unit_amount: Math.round(STRIPE_PRICE_GBP * 100),
+                        product_data: {
+                            name: PAYPAL_TITLE,
+                            description: "Personalised Memory Tune song checkout",
+                        },
+                    },
+                },
+            ],
+            metadata: {
+                session_id: sessionId,
+                customer_key: customerKey || "",
+                customer_phone: normalizedPhone,
+                client_name: clientName || "",
+            },
+        });
+
+        upsertTempMusicSession(sessionId, {
+            stripeCheckoutSessionId: checkoutSession.id,
+            stripeCheckoutStatus: checkoutSession.status || null,
+            stripePaymentStatus: checkoutSession.payment_status || null,
+        });
+
+        return res.json({
+            provider: "stripe",
+            checkout_url: checkoutSession.url || null,
+            stripe_session_id: checkoutSession.id,
+        });
+    } catch (error) {
+        return res.status(500).json({ error: error.message || "Internal error while creating Stripe checkout." });
+    }
+});
+
+app.post("/api/payment/stripe/confirm", async (req, res) => {
+    try {
+        if (!STRIPE_SECRET_KEY) {
+            return res.status(400).json({ error: "Stripe is not configured in the environment." });
+        }
+
+        const {
+            session_id: requestedSessionId,
+            stripe_session_id: providedStripeSessionId,
+        } = req.body || {};
+
+        const existingSession = (requestedSessionId && (getTempMusicSession(requestedSessionId) || getPaidMusicSession(requestedSessionId))) || null;
+        const stripeSessionId = String(providedStripeSessionId || existingSession?.stripeCheckoutSessionId || "").trim();
+        if (!stripeSessionId) {
+            return res.status(400).json({ error: "stripe_session_id is required." });
+        }
+
+        const stripe = getStripeClient();
+        const checkoutSession = await stripe.checkout.sessions.retrieve(stripeSessionId, {
+            expand: ["payment_intent"],
+        });
+
+        const sessionId = String(
+            requestedSessionId ||
+            checkoutSession.metadata?.session_id ||
+            existingSession?.sessionId ||
+            ""
+        ).trim();
+
+        if (!sessionId) {
+            return res.status(400).json({ error: "session_id is required to confirm Stripe payment." });
+        }
+
+        const resolvedExisting = getTempMusicSession(sessionId) || getPaidMusicSession(sessionId) || {};
+        upsertTempMusicSession(sessionId, {
+            customerKey: resolvedExisting.customerKey || checkoutSession.metadata?.customer_key || "",
+            clientName: resolvedExisting.clientName || checkoutSession.metadata?.client_name || "",
+            customerPhone: normalizeWhatsAppNumber(
+                resolvedExisting.customerPhone ||
+                checkoutSession.metadata?.customer_phone ||
+                ""
+            ),
+            customerEmail: normalizeEmailAddress(
+                checkoutSession.customer_details?.email ||
+                checkoutSession.customer_email ||
+                resolvedExisting.customerEmail ||
+                ""
+            ),
+            title: resolvedExisting.title || PAYPAL_TITLE,
+            subtitle: "Card checkout started to unlock song production.",
+            badge: "Card checkout started",
+            stripeCheckoutSessionId: checkoutSession.id,
+            stripeCheckoutStatus: checkoutSession.status || null,
+            stripePaymentStatus: checkoutSession.payment_status || null,
+        });
+
+        if (checkoutSession.payment_status === "paid") {
+            const paymentIntentId =
+                typeof checkoutSession.payment_intent === "string"
+                    ? checkoutSession.payment_intent
+                    : checkoutSession.payment_intent?.id || checkoutSession.id;
+            markPaid(sessionId, { paymentId: paymentIntentId, status: "STRIPE_PAID" });
+        }
+
+        const paid = paidSessions.get(sessionId);
+        const tempSession = getTempMusicSession(sessionId);
+        const paidSession = getPaidMusicSession(sessionId);
+        const session = paidSession || tempSession;
+        const isPaid = Boolean(paid?.paid || paidSession?.paid || tempSession?.paid);
+        const phone = session?.customerPhone || tempSession?.customerPhone || "";
+        const wallet = phone ? previewCreditWallets.get(phone) : null;
+
+        if (isPaid) {
+            const baseUrl = getBaseUrl(req);
+            setTimeout(() => {
+                sendMusicReadyEmailIfEligible(sessionId, baseUrl).catch((error) => {
+                    console.error("Erro ao enviar e-mail automatico apos confirmacao Stripe", error);
+                });
+            }, 0);
+        }
+
+        return res.json({
+            paid: isPaid,
+            payment_id: session?.paymentId || null,
+            payment_status: session?.status || checkoutSession.payment_status || null,
+            credits_remaining: wallet ? wallet.credits : null,
+            credit_rewarded: Boolean(session?.creditRewarded || paid?.creditRewarded),
+            download_url_1: isPaid ? (paidSession?.downloadUrl1 || tempSession?.downloadUrl1 || "") : "",
+            download_url_2: isPaid ? (paidSession?.downloadUrl2 || tempSession?.downloadUrl2 || "") : "",
+            stripe_session_id: checkoutSession.id,
+            stripe_checkout_status: checkoutSession.status || null,
+            stripe_payment_status: checkoutSession.payment_status || null,
+        });
+    } catch (error) {
+        return res.status(500).json({ error: error.message || "Internal error while confirming Stripe payment." });
+    }
+});
+
 app.post("/api/payment/process", async (req, res) => {
     try {
         if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
@@ -1895,6 +2155,7 @@ app.post("/api/payment/process", async (req, res) => {
 
 app.get("/api/payment/status", async (req, res) => {
     const sessionId = req.query.session_id;
+    const stripeSessionId = String(req.query.stripe_session_id || "").trim();
     if (!sessionId) {
         return res.status(400).json({ error: "session_id is required." });
     }
@@ -1902,6 +2163,11 @@ app.get("/api/payment/status", async (req, res) => {
         await syncPayPalOrderForSession(sessionId, req);
     } catch (error) {
         console.error("Error while syncing PayPal payment status", error);
+    }
+    try {
+        await syncStripeCheckoutForSession(sessionId, req, stripeSessionId);
+    } catch (error) {
+        console.error("Error while syncing Stripe payment status", error);
     }
 
     const paid = paidSessions.get(sessionId);
@@ -1930,5 +2196,8 @@ app.get("/api/payment/status", async (req, res) => {
         download_url_2: isPaid ? downloadUrl2 : "",
         paypal_order_id: session?.paypalOrderId || null,
         paypal_order_status: session?.paypalOrderStatus || null,
+        stripe_checkout_session_id: session?.stripeCheckoutSessionId || null,
+        stripe_checkout_status: session?.stripeCheckoutStatus || null,
+        stripe_payment_status: session?.stripePaymentStatus || null,
     });
 });

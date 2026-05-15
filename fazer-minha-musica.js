@@ -1121,11 +1121,13 @@ let previewPhone = document.getElementById("previewPhone");
 let testModeBadge = document.getElementById("testModeBadge");
 const generateMusicBtn = document.getElementById("generateMusicBtn");
 let buyPreviewCreditBtn = document.getElementById("buyPreviewCreditBtn");
+let buyPreviewCreditStripeBtn = document.getElementById("buyPreviewCreditStripeBtn");
 const musicGenStatus = document.getElementById("musicGenStatus");
 const musicLeaveWarning = document.getElementById("musicLeaveWarning");
 const musicUnlockWarning = document.getElementById("musicUnlockWarning");
 const musicDownloads = document.getElementById("musicDownloads");
 const downloadBothBtn = document.getElementById("downloadBothBtn");
+const downloadBothStripeBtn = document.getElementById("downloadBothStripeBtn");
 const downloadVersion1Btn = document.getElementById("downloadVersion1Btn");
 const downloadVersion2Btn = document.getElementById("downloadVersion2Btn");
 const confirmPaymentBtn = document.getElementById("confirmPaymentBtn");
@@ -1173,6 +1175,17 @@ function ensurePreviewCreditFields() {
         buyPreviewCreditBtn.hidden = true;
         buyPreviewCreditBtn.textContent = "Unlock my full song for £14.99";
         generateMusicBtn.insertAdjacentElement("afterend", buyPreviewCreditBtn);
+    }
+
+    if (!buyPreviewCreditStripeBtn && actions) {
+        buyPreviewCreditStripeBtn = document.createElement("button");
+        buyPreviewCreditStripeBtn.id = "buyPreviewCreditStripeBtn";
+        buyPreviewCreditStripeBtn.type = "button";
+        buyPreviewCreditStripeBtn.className = "btn btn-outline";
+        buyPreviewCreditStripeBtn.hidden = true;
+        buyPreviewCreditStripeBtn.textContent = "Pay with card via Stripe";
+        const anchor = buyPreviewCreditBtn || generateMusicBtn;
+        anchor.insertAdjacentElement("afterend", buyPreviewCreditStripeBtn);
     }
 }
 
@@ -1298,6 +1311,16 @@ function updatePaidDownloadActions() {
         downloadBothBtn.classList.toggle("is-ready", paymentApproved);
         downloadBothBtn.classList.remove("is-waiting");
         downloadBothBtn.disabled = false;
+    }
+
+    if (downloadBothStripeBtn) {
+        downloadBothStripeBtn.hidden = hasPaidDownloads;
+        downloadBothStripeBtn.disabled = false;
+    }
+
+    if (buyPreviewCreditStripeBtn && buyPreviewCreditBtn) {
+        buyPreviewCreditStripeBtn.hidden = buyPreviewCreditBtn.hidden;
+        buyPreviewCreditStripeBtn.disabled = false;
     }
 
     if (downloadVersion1Btn) {
@@ -1952,6 +1975,47 @@ async function fetchPaymentConfig() {
     return paymentConfigPromise;
 }
 
+async function createStripeCheckout(extra = {}) {
+    const response = await fetch(apiUrl("/api/payment/stripe/create"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            session_id: currentMusicSessionId,
+            customer_key: customerLibraryKey,
+            traffic_source: trafficSource,
+            client_name: lastFormValues?.clientName || "",
+            customer_phone: getNormalizedPreviewPhone(),
+            customer_email: getNormalizedPreviewEmail(),
+            ...extra,
+        }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+        throw new Error(data?.error || "We could not start the Stripe checkout.");
+    }
+    return data;
+}
+
+async function startStripeCheckout(analyticsExtra = {}, extraPayload = {}) {
+    const config = await fetchPaymentConfig();
+    if (!config?.stripe?.enabled) {
+        throw new Error("Stripe is not available right now.");
+    }
+
+    const checkout = await createStripeCheckout(extraPayload);
+    if (!checkout?.checkout_url) {
+        throw new Error("We could not generate the Stripe checkout link.");
+    }
+
+    trackGa("payment_checkout_opened", buildCheckoutAnalyticsParams({
+        checkout_provider: "stripe",
+        checkout_mode: "redirect",
+        ...analyticsExtra,
+    }));
+    setMusicStatus("Redirecting you to the secure card checkout...");
+    window.location.assign(checkout.checkout_url);
+}
+
 async function loadPayPalSdk(config) {
     if (window.paypal) return window.paypal;
     await new Promise((resolve, reject) => {
@@ -2125,6 +2189,50 @@ if (buyPreviewCreditBtn) {
     });
 }
 
+if (buyPreviewCreditStripeBtn) {
+    buyPreviewCreditStripeBtn.addEventListener("click", async () => {
+        let customerPhone = "";
+        const customerEmail = getNormalizedPreviewEmail();
+        try {
+            customerPhone = validatePreviewPhone();
+        } catch (error) {
+            setMusicStatus(error.message, true);
+            previewPhone?.focus();
+            return;
+        }
+
+        if (!currentMusicSessionId || hasMusicReady) {
+            setCurrentMusicSessionId(createMusicSessionId());
+        }
+
+        buyPreviewCreditStripeBtn.disabled = true;
+        trackGa("begin_checkout", buildCheckoutAnalyticsParams({
+            checkout_step: "sem_creditos",
+            checkout_provider: "stripe",
+            customer_phone: customerPhone,
+        }));
+
+        try {
+            if (musicUnlockWarning) {
+                musicUnlockWarning.hidden = false;
+            }
+            await startStripeCheckout(
+                {
+                    checkout_step: "sem_creditos",
+                },
+                {
+                    customer_phone: customerPhone,
+                    customer_email: customerEmail,
+                }
+            );
+        } catch (error) {
+            setMusicStatus(error.message || "We could not start the Stripe checkout.", true);
+        } finally {
+            buyPreviewCreditStripeBtn.disabled = false;
+        }
+    });
+}
+
 if (downloadBothBtn) {
     downloadBothBtn.addEventListener("click", async () => {
         if (!currentMusicSessionId || !hasMusicReady) {
@@ -2168,6 +2276,30 @@ if (downloadBothBtn) {
             setMusicStatus(error.message || "We could not start payment.", true);
         } finally {
             downloadBothBtn.disabled = false;
+        }
+    });
+}
+
+if (downloadBothStripeBtn) {
+    downloadBothStripeBtn.addEventListener("click", async () => {
+        if (!currentMusicSessionId || !hasMusicReady) {
+            setMusicStatus("The songs are not ready to unlock yet.", true);
+            return;
+        }
+        downloadBothStripeBtn.disabled = true;
+        trackGa("begin_checkout", buildCheckoutAnalyticsParams({
+            checkout_step: "click_liberar_musica",
+            checkout_provider: "stripe",
+        }));
+        try {
+            setMusicStatus("Redirecting you to the secure card checkout...");
+            await startStripeCheckout({
+                checkout_step: "click_liberar_musica",
+            });
+        } catch (error) {
+            setMusicStatus(error.message || "We could not start the Stripe checkout.", true);
+        } finally {
+            downloadBothStripeBtn.disabled = false;
         }
     });
 }
