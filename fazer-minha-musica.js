@@ -1973,6 +1973,47 @@ async function fetchPaymentConfig() {
     return paymentConfigPromise;
 }
 
+async function createStripeCheckout(extra = {}) {
+    const response = await fetch(apiUrl("/api/payment/stripe/create"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            session_id: currentMusicSessionId,
+            customer_key: customerLibraryKey,
+            traffic_source: trafficSource,
+            client_name: lastFormValues?.clientName || "",
+            customer_phone: getNormalizedPreviewPhone(),
+            customer_email: getNormalizedPreviewEmail(),
+            ...extra,
+        }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+        throw new Error(data?.error || "We could not start the Stripe checkout.");
+    }
+    return data;
+}
+
+async function startStripeCheckout(analyticsExtra = {}, extraPayload = {}) {
+    const config = await fetchPaymentConfig().catch(() => null);
+    if (config?.provider !== "stripe" || !config?.stripe?.enabled) {
+        throw new Error("Stripe is not available right now.");
+    }
+
+    const checkout = await createStripeCheckout(extraPayload);
+    if (!checkout?.checkout_url) {
+        throw new Error("We could not generate the Stripe checkout link.");
+    }
+
+    trackGa("payment_checkout_opened", buildCheckoutAnalyticsParams({
+        checkout_provider: "stripe",
+        checkout_mode: "redirect",
+        ...analyticsExtra,
+    }));
+    setMusicStatus("Redirecting you to the secure card checkout...");
+    window.location.assign(checkout.checkout_url);
+}
+
 async function loadPayPalSdk(config) {
     if (window.paypal) return window.paypal;
     await new Promise((resolve, reject) => {
@@ -2124,25 +2165,21 @@ if (buyPreviewCreditBtn) {
         buyPreviewCreditBtn.disabled = true;
         trackGa("begin_checkout", buildCheckoutAnalyticsParams({
             checkout_step: "sem_creditos",
+            checkout_provider: "stripe",
             customer_phone: customerPhone,
         }));
 
         try {
-            const payment = await createPayment({
-                customer_phone: customerPhone,
-                customer_email: customerEmail,
-            });
-            setMusicStatus("Payment started. Once approved, you will be able to generate and download your song.");
             if (musicUnlockWarning) {
                 musicUnlockWarning.hidden = false;
             }
-            const embeddedOpened = await openEmbeddedCheckout(payment, {
-                checkout_step: "sem_creditos",
-            }).catch(() => false);
-            if (!embeddedOpened) {
-                throw new Error("We could not open the embedded PayPal checkout right now.");
-            }
-            pollPaymentStatus();
+            await startStripeCheckout(
+                { checkout_step: "sem_creditos" },
+                {
+                    customer_phone: customerPhone,
+                    customer_email: customerEmail,
+                }
+            );
         } catch (error) {
             setMusicStatus(error.message || "We could not start payment.", true);
         } finally {
@@ -2167,6 +2204,7 @@ if (downloadBothBtn) {
         });
         trackGa("begin_checkout", buildCheckoutAnalyticsParams({
             checkout_step: "click_liberar_musica",
+            checkout_provider: "stripe",
         }));
         trackPixel("InitiateCheckout", {
             content_name: CHECKOUT_ITEM.item_name,
@@ -2177,21 +2215,19 @@ if (downloadBothBtn) {
             num_items: 1,
         });
         try {
-            const payment = await createPayment();
-            setMusicStatus("Payment started. As soon as approval happens, the download will be released automatically.");
             if (downloadBothBtn) {
-                downloadBothBtn.textContent = "Waiting for song release";
+                downloadBothBtn.textContent = "Redirecting to checkout...";
                 downloadBothBtn.classList.add("is-waiting");
             }
-            const embeddedOpened = await openEmbeddedCheckout(payment, {
+            await startStripeCheckout({
                 checkout_step: "click_liberar_musica",
-            }).catch(() => false);
-            if (!embeddedOpened) {
-                throw new Error("We could not open the embedded PayPal checkout right now.");
-            }
-            pollPaymentStatus();
+            });
         } catch (error) {
             setMusicStatus(error.message || "We could not start payment.", true);
+            if (downloadBothBtn) {
+                downloadBothBtn.textContent = "Unlock my full song for £14.99";
+                downloadBothBtn.classList.remove("is-waiting");
+            }
         } finally {
             downloadBothBtn.disabled = false;
         }
