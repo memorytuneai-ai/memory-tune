@@ -271,6 +271,21 @@ a {
     opacity: 1;
 }
 
+.occasion-card-media {
+    display: block;
+    width: calc(100% + 44px);
+    margin: -24px -22px 16px;
+    overflow: hidden;
+    border-radius: 24px 24px 0 0;
+}
+
+.occasion-card-media img {
+    display: block;
+    width: 100%;
+    height: 168px;
+    object-fit: cover;
+}
+
 .hero-copy > *,
 .hero-panel > *,
 .builder-card > *,
@@ -694,17 +709,17 @@ a {
     gap: 12px;
     padding: 16px 18px;
     border-radius: 18px;
-    border: 1px solid rgba(166, 122, 24, 0.28);
-    background: rgba(166, 122, 24, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    background: rgba(212, 175, 55, 0.07);
 }
 
 .exclusive-note i {
-    color: #b07b12;
+    color: var(--color-gold-bright);
     margin-top: 4px;
 }
 
 .exclusive-note p {
-    color: rgba(104, 72, 10, 0.9);
+    color: rgba(244, 235, 205, 0.88);
     font-size: 0.95rem;
 }
 
@@ -925,67 +940,14 @@ a {
     }
 
     .sales-section {
-        padding: 20px 0 28px;
+        padding: 26px 0 36px;
     }
 
     .benefit-card,
     .step-card,
     .testimonial-card,
     .faq-item {
-        padding: 12px 14px;
-    }
-
-    .section-heading {
-        margin-bottom: 18px;
-    }
-
-    .section-heading h2 {
-        margin: 10px 0 8px;
-        font-size: clamp(1.8rem, 7vw, 2.3rem);
-    }
-
-    .section-heading p {
-        font-size: 0.96rem;
-        line-height: 1.5;
-    }
-
-    .testimonial-card {
-        gap: 10px;
-        border-radius: 22px;
-    }
-
-    .testimonial-mark {
-        font-size: 2rem;
-        line-height: 1;
-    }
-
-    .testimonial-card figcaption {
-        gap: 8px;
-    }
-
-    .testimonial-card figcaption strong {
-        font-size: 0.92rem;
-        line-height: 1.2;
-    }
-
-    .testimonial-card figcaption span {
-        font-size: 0.92rem;
-        line-height: 1.5;
-    }
-
-    .faq-item {
-        border-radius: 22px;
-    }
-
-    .faq-item h3 {
-        font-size: 0.98rem;
-        line-height: 1.3;
-        margin-bottom: 8px;
-    }
-
-    .faq-item p {
-        font-size: 0.94rem;
-        line-height: 1.5;
+        padding: 14px 16px;
     }
 
     .pricing-card {
@@ -1005,15 +967,15 @@ a {
     margin-top: 28px;
     padding: 20px;
     border-radius: 18px;
-    background: radial-gradient(circle at top, rgba(184, 134, 24, 0.18), rgba(10, 10, 10, 0.92));
-    border: 1px solid rgba(166, 122, 24, 0.42);
-    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(184, 134, 24, 0.12) inset;
+    background: radial-gradient(circle at top, rgba(212, 175, 55, 0.12), rgba(10, 10, 10, 0.9));
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
 }
 
 .musicgen-panel .panel-head h3 {
     margin: 0 0 6px;
     font-size: 1.15rem;
-    color: #e6c15e;
+    color: #f7e7b5;
 }
 
 .musicgen-panel .panel-head p {
@@ -1037,31 +999,6 @@ a {
     max-width: 420px;
 }
 
-.musicgen-grid .form-row-style,
-.musicgen-grid .form-row-voice {
-    padding: 14px 14px 12px;
-    border-radius: 18px;
-    border: 1px solid rgba(166, 122, 24, 0.32);
-    background: linear-gradient(180deg, rgba(255, 248, 229, 0.7), rgba(255, 244, 216, 0.38));
-    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.08);
-}
-
-.musicgen-grid .form-row-style label,
-.musicgen-grid .form-row-voice label {
-    color: #6f4a06;
-    font-size: 0.98rem;
-    font-weight: 800;
-    letter-spacing: 0.01em;
-}
-
-.musicgen-grid .form-row-style select,
-.musicgen-grid .form-row-voice select {
-    min-height: 54px;
-    border: 1px solid rgba(176, 123, 18, 0.35);
-    background-color: rgba(255, 252, 244, 0.92);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
-}
-
 .musicgen-hidden-control {
     display: none !important;
 }
@@ -1082,7 +1019,7 @@ a {
 }
 
 .preview-credit-box label {
-    color: #8f6208;
+    color: var(--color-gold-light);
     font-weight: 700;
 }
 
@@ -1110,9 +1047,8 @@ a {
 }
 
 .preview-credit-box small {
-    color: rgba(28, 28, 28, 0.8);
+    color: rgba(255, 255, 255, 0.7);
     line-height: 1.45;
-    font-weight: 500;
 }
 
 .test-mode-badge {
@@ -1151,7 +1087,7 @@ a {
     border: none;
     border-radius: 0;
     background: transparent;
-    color: rgba(116, 78, 8, 0.88);
+    color: rgba(255, 245, 207, 0.88);
     font-size: 0.9rem;
     font-weight: 500;
     cursor: default;
@@ -1163,8 +1099,8 @@ a {
     height: 7px;
     flex: 0 0 7px;
     border-radius: 50%;
-    background: #c5911b;
-    box-shadow: 0 0 0 4px rgba(197, 145, 27, 0.12);
+    background: var(--color-gold-bright);
+    box-shadow: 0 0 0 4px rgba(246, 212, 106, 0.08);
 }
 
 .musicgen-panel.is-generating {
@@ -1175,42 +1111,6 @@ a {
 .musicgen-panel.is-generating .preview-credit-box,
 .musicgen-panel.is-generating .musicgen-grid {
     opacity: 0.68;
-}
-
-#musicGenStatus {
-    width: 100%;
-    margin: 4px 0 0;
-    padding: 14px 16px;
-    border: 1px solid rgba(176, 123, 18, 0.24);
-    border-radius: 16px;
-    background: linear-gradient(135deg, rgba(255, 249, 233, 0.96), rgba(255, 243, 214, 0.94));
-    color: #6a4908;
-    font-size: 0.98rem;
-    font-weight: 700;
-    line-height: 1.5;
-    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.08);
-}
-
-#musicGenStatus.is-error {
-    border-color: rgba(182, 43, 43, 0.28);
-    background: linear-gradient(135deg, rgba(255, 234, 234, 0.98), rgba(255, 244, 244, 0.96));
-    color: #8f1f1f;
-    box-shadow: 0 14px 28px rgba(143, 31, 31, 0.08);
-}
-
-#musicGenStatus.is-error::before {
-    content: "Attention";
-    display: inline-block;
-    margin-right: 10px;
-    padding: 4px 8px;
-    border-radius: 999px;
-    background: rgba(182, 43, 43, 0.12);
-    color: #a12222;
-    font-size: 0.75rem;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    vertical-align: middle;
 }
 
 #musicGenStatus.is-loading {
@@ -1440,19 +1340,19 @@ a {
 .musicgen-panel select {
     appearance: none;
     background-image:
-        linear-gradient(135deg, rgba(176, 123, 18, 0.18), rgba(0,0,0,0)),
-        radial-gradient(circle at right 16px center, rgba(176, 123, 18, 0.92) 0, rgba(176, 123, 18, 0.92) 35%, transparent 36%),
+        linear-gradient(135deg, rgba(212, 175, 55, 0.22), rgba(0,0,0,0)),
+        radial-gradient(circle at right 16px center, rgba(212, 175, 55, 0.9) 0, rgba(212, 175, 55, 0.9) 35%, transparent 36%),
         radial-gradient(circle at right 10px center, rgba(11, 11, 12, 0.9) 0, rgba(11, 11, 12, 0.9) 35%, transparent 36%);
     background-repeat: no-repeat;
     background-size: auto, 10px 10px, 10px 10px;
     background-position: left top, right 14px center, right 6px center;
     padding-right: 44px;
-    border-color: rgba(176, 123, 18, 0.44);
+    border-color: rgba(212, 175, 55, 0.4);
 }
 
 .musicgen-panel select:focus {
-    border-color: rgba(176, 123, 18, 0.72);
-    box-shadow: 0 0 0 4px rgba(176, 123, 18, 0.14), 0 10px 20px rgba(176, 123, 18, 0.08);
+    border-color: rgba(212, 175, 55, 0.7);
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.12);
 }
 
 .musicgen-panel select optgroup {
@@ -3245,8 +3145,7 @@ body.landing-page::after {
 .music-unlock-warning,
 .price-note,
 .benefits-note {
-    color: #5b4120;
-    font-weight: 700;
+    color: var(--color-text-soft);
 }
 
 .form-row label,
@@ -3408,10 +3307,6 @@ textarea::placeholder {
 }
 
 @media (max-width: 720px) {
-    body.memory-body::after {
-        display: none;
-    }
-
     .container {
         width: min(100% - 28px, 1180px);
     }
@@ -3431,50 +3326,6 @@ textarea::placeholder {
         font-size: clamp(2.7rem, 12vw, 4rem);
     }
 
-    body.memory-body .hero-copy {
-        position: relative;
-        overflow: hidden;
-        background-image: linear-gradient(180deg, rgba(255, 252, 245, 0.97), rgba(247, 239, 225, 0.96));
-        background-repeat: no-repeat;
-        background-size: auto;
-        background-position: 0 0;
-        box-shadow: 0 24px 52px rgba(0, 0, 0, 0.12);
-    }
-
-    body.memory-body .hero-copy::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        border-radius: inherit;
-        background:
-            url('logo.png') center 40px / min(76vw, 300px) no-repeat,
-            radial-gradient(circle at 50% 110px, rgba(255, 250, 240, 0.32), transparent 130px),
-            linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0, rgba(255, 255, 255, 0) 42%);
-        opacity: 0.22;
-        z-index: 0;
-    }
-
-    body.memory-body .hero-copy::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        background:
-            linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0, rgba(255, 255, 255, 0) 38%),
-            linear-gradient(180deg, rgba(255, 252, 245, 0.18) 18%, rgba(255, 252, 245, 0.76) 44%, rgba(247, 239, 225, 0.96) 64%);
-        z-index: 1;
-    }
-
-    body.memory-body .hero-copy > * {
-        position: relative;
-        z-index: 2;
-    }
-
-    body.memory-body .hero-copy .eyebrow {
-        margin-top: 134px;
-    }
-
     .landing-visual-card {
         min-height: 420px;
     }
@@ -3490,10 +3341,6 @@ textarea::placeholder {
     .memory-photo-three {
         inset: auto 100px 18px 26px;
         height: 120px;
-    }
-
-    body.memory-body .hero-logo-panel {
-        display: none;
     }
 }
 
@@ -3526,6 +3373,11 @@ body.memory-body .occasion-card .occasion-type {
     background: rgba(232, 216, 195, 0.58);
     color: #8b6f4d;
     border: 1px solid rgba(139, 111, 77, 0.12);
+}
+
+body.memory-body .occasion-card .occasion-card-media {
+    width: calc(100% + 52px);
+    margin: -26px -26px 18px;
 }
 
 body.memory-body .occasion-card h3 {
@@ -3750,153 +3602,5 @@ body.memory-body .hero-logo-art {
     .final-price-note small {
         max-width: none;
         text-align: left;
-    }
-}
-
-@media (max-width: 720px) {
-    body.memory-body::after {
-        display: none !important;
-    }
-
-    body.memory-body .hero-logo-panel {
-        display: none !important;
-    }
-
-    body.memory-body .hero-copy {
-        position: relative;
-        overflow: hidden;
-        padding: 24px 18px 22px !important;
-        background-image: linear-gradient(180deg, rgba(255, 252, 245, 0.98), rgba(247, 239, 225, 0.97)) !important;
-    }
-
-    body.memory-body .hero-copy::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        z-index: 0;
-        pointer-events: none;
-        border-radius: inherit;
-        background:
-            url('logo.png') center 34px / min(72vw, 280px) no-repeat,
-            radial-gradient(circle at 50% 96px, rgba(212, 175, 55, 0.14), transparent 120px);
-        opacity: 0.22;
-    }
-
-    body.memory-body .hero-copy::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        z-index: 1;
-        pointer-events: none;
-        background: linear-gradient(180deg, rgba(255, 252, 245, 0.08) 0%, rgba(255, 252, 245, 0.68) 34%, rgba(247, 239, 225, 0.96) 54%);
-    }
-
-    body.memory-body .hero-copy > * {
-        position: relative;
-        z-index: 2;
-    }
-
-    body.memory-body .hero-copy .eyebrow {
-        margin-top: 124px !important;
-    }
-
-    body.memory-body .sales-section {
-        padding: 18px 0 22px !important;
-    }
-
-    body.memory-body .section-heading {
-        margin-bottom: 14px !important;
-    }
-
-    body.memory-body .section-heading h2 {
-        margin: 8px 0 6px !important;
-        font-size: clamp(1.65rem, 6.2vw, 2.1rem) !important;
-    }
-
-    body.memory-body .section-heading p {
-        font-size: 0.92rem !important;
-        line-height: 1.42 !important;
-    }
-
-    body.memory-body .occasion-grid {
-        gap: 10px !important;
-    }
-
-    body.memory-body .occasion-card {
-        min-height: 0 !important;
-        padding: 14px 14px !important;
-        border-radius: 20px !important;
-    }
-
-    body.memory-body .occasion-card h3 {
-        margin: 10px 0 6px !important;
-        font-size: 1.08rem !important;
-        line-height: 1.12 !important;
-    }
-
-    body.memory-body .occasion-card p {
-        font-size: 0.88rem !important;
-        line-height: 1.38 !important;
-    }
-
-    body.memory-body .occasion-card .occasion-type {
-        padding: 5px 9px !important;
-        font-size: 0.66rem !important;
-        letter-spacing: 0.08em !important;
-    }
-
-    body.memory-body .occasion-card .occasion-cta {
-        margin-top: 10px !important;
-        padding: 8px 12px !important;
-        font-size: 0.74rem !important;
-    }
-
-    body.memory-body .benefit-card,
-    body.memory-body .step-card,
-    body.memory-body .testimonial-card,
-    body.memory-body .faq-item,
-    body.memory-body .demo-song-card {
-        padding: 12px 12px !important;
-        border-radius: 20px !important;
-    }
-
-    body.memory-body .testimonial-grid {
-        gap: 14px !important;
-    }
-
-    body.memory-body .testimonial-card {
-        min-height: auto !important;
-        padding: 12px 12px !important;
-    }
-
-    body.memory-body .testimonial-mark {
-        font-size: 1.9rem !important;
-        margin-bottom: 2px !important;
-    }
-
-    body.memory-body .testimonial-card figcaption {
-        gap: 8px !important;
-    }
-
-    body.memory-body .testimonial-card figcaption strong {
-        font-size: 0.92rem !important;
-        line-height: 1.2 !important;
-    }
-
-    body.memory-body .testimonial-card figcaption span {
-        font-size: 0.91rem !important;
-        line-height: 1.48 !important;
-    }
-
-    body.memory-body .faq-item h3 {
-        font-size: 0.98rem !important;
-        line-height: 1.28 !important;
-        margin-bottom: 6px !important;
-        color: #b68419 !important;
-    }
-
-    body.memory-body .faq-item p {
-        font-size: 0.92rem !important;
-        line-height: 1.46 !important;
     }
 }

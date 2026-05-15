@@ -193,6 +193,32 @@ const OCCASIONS = {
             ]
         })
     },
+    "romantic-song": {
+        label: "Romantic Song",
+        type: "Romance",
+        image: "romantic-song-card.png",
+        intro: "A timeless romantic song shaped around how your story began, what deepened it, and the details that make this love feel unmistakably yours.",
+        whatsappNumber: GENERAL_WHATSAPP_NUMBER,
+        fields: [
+            { id: "lovedOneName", label: "Name of the loved one", type: "text", placeholder: "Example: Isabella" },
+            { id: "clientName", label: "Who is requesting the song?", type: "text", placeholder: "Who is creating this song?" },
+            { id: "howMet", label: "How did you meet?", type: "textarea", placeholder: "Tell us how your story began.", rows: 4 },
+            { id: "specialMoment", label: "What moment marked your story the most?", type: "textarea", placeholder: "Describe the moment that changed everything.", rows: 4 },
+            { id: "whatYouLoveMost", label: "What do you love most about this person?", type: "textarea", placeholder: "Their presence, kindness, energy, smile, way of loving...", rows: 3 },
+            { id: "specialDetail", label: "Is there any phrase, nickname or special detail that cannot be left out?", type: "textarea", placeholder: "A nickname, a line you always say, or a tiny detail that belongs only to your story.", rows: 3 },
+            { id: "emotionStyle", label: "How would you like the song to feel?", type: "select", options: ["💖 Romantic", "🥹 Emotional", "✨ Poetic"] }
+        ],
+        buildPreview: (values) => ({
+            badge: "Romantic Song",
+            title: `A love song for ${values.lovedOneName || "someone unforgettable"}`,
+            subtitle: `A romantic preview built from the story shared by ${values.clientName || "you"}.`,
+            blocks: [
+                { heading: "Verse 1", text: `${values.howMet || "Some stories begin so softly that you only realise later how deeply they changed your life."}` },
+                { heading: "Verse 2", text: `${values.specialMoment || "There was a moment when this love stopped feeling like chance and started feeling like home."} ${values.whatYouLoveMost || "There is something about this person that makes the whole world feel gentler."}` },
+                { heading: "Chorus", text: `${values.lovedOneName || "You"}, ${values.specialDetail || "there are details in our story that no one else could ever repeat the same way."} This song keeps the tenderness, the feeling, and the quiet certainty of what you mean to me.` }
+            ]
+        })
+    },
     casamento: {
         label: "Marriage proposal",
         type: "Romance",
@@ -257,7 +283,6 @@ let previewUrl1 = "";
 let previewUrl2 = "";
 let paymentApproved = false;
 let previewPlaybackUnlocked = true;
-let stripeCheckoutEnabled = false;
 const LOCAL_LIBRARY_KEY = "ss_music_library_cache";
 const LOCAL_LIBRARY_TTL_MS = 24 * 60 * 60 * 1000;
 const customerLibraryKey = (() => {
@@ -296,7 +321,7 @@ function buildLibraryUrl({ sessionId = currentMusicSessionId, paymentStatus = "s
     if (customerLibraryKey) params.set("customer_key", customerLibraryKey);
     const phone = getNormalizedPreviewPhone();
     if (phone) params.set("customer_phone", phone);
-    return `/my-songs?${params.toString()}`;
+    return `minhas-musicas.html?${params.toString()}`;
 }
 
 function redirectToLibraryPage(options = {}) {
@@ -540,6 +565,7 @@ function renderOccasionCards() {
     occasionGrid.innerHTML = Object.entries(OCCASIONS)
         .map(([key, config]) => `
             <button class="occasion-card" type="button" data-occasion="${key}">
+                ${config.image ? `<span class="occasion-card-media"><img src="${config.image}" alt="${config.label}"></span>` : ""}
                 <span class="occasion-type">${config.type}</span>
                 <h3>${config.label}</h3>
                 <p>${config.intro}</p>
@@ -1146,23 +1172,13 @@ function ensurePreviewCreditFields() {
         const creditBox = document.createElement("div");
         creditBox.className = "preview-credit-box";
         creditBox.innerHTML = `
-            <label class="preview-credit-title" for="previewPhone">Enter your WhatsApp number and email address to receive your full song</label>
-            <div class="preview-contact-grid">
-                <div class="preview-contact-field">
-                    <label for="previewPhone">WhatsApp number</label>
-                    <input id="previewPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Example: +44 7700 900123">
-                </div>
-                <div class="preview-contact-field">
-                    <label for="previewEmail">Email address</label>
-                    <input id="previewEmail" type="email" inputmode="email" autocomplete="email" placeholder="Example: name@email.com">
-                </div>
-            </div>
-            <small>We only use these details to deliver your song and help you find it again later.</small>
+            <label for="previewPhone">To unlock your complimentary preview, enter your WhatsApp number</label>
+            <input id="previewPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Example: +44 7700 900123">
+            <small>We only use this to deliver your song and help you find it again later.</small>
             <span id="testModeBadge" class="test-mode-badge" hidden>Test mode active</span>
         `;
         actions?.parentNode?.insertBefore(creditBox, actions);
         previewPhone = document.getElementById("previewPhone");
-        previewEmail = document.getElementById("previewEmail");
         testModeBadge = document.getElementById("testModeBadge");
     }
 
@@ -1175,7 +1191,6 @@ function ensurePreviewCreditFields() {
         buyPreviewCreditBtn.textContent = "Unlock my full song for £14.99";
         generateMusicBtn.insertAdjacentElement("afterend", buyPreviewCreditBtn);
     }
-
 }
 
 ensurePreviewCreditFields();
@@ -1295,15 +1310,11 @@ function updatePaidDownloadActions() {
     const hasPaidDownloads = paymentApproved && downloadUrl1 && downloadUrl2;
 
     if (downloadBothBtn) {
-        downloadBothBtn.hidden = hasPaidDownloads || !stripeCheckoutEnabled;
+        downloadBothBtn.hidden = hasPaidDownloads;
         downloadBothBtn.textContent = "Unlock my full song for £14.99";
         downloadBothBtn.classList.toggle("is-ready", paymentApproved);
         downloadBothBtn.classList.remove("is-waiting");
         downloadBothBtn.disabled = false;
-    }
-    if (buyPreviewCreditBtn) {
-        buyPreviewCreditBtn.hidden = paymentApproved || stripeCheckoutEnabled === false;
-        buyPreviewCreditBtn.disabled = false;
     }
 
     if (downloadVersion1Btn) {
@@ -1958,55 +1969,6 @@ async function fetchPaymentConfig() {
     return paymentConfigPromise;
 }
 
-async function syncStripeCheckoutAvailability() {
-    const config = await fetchPaymentConfig().catch(() => null);
-    stripeCheckoutEnabled = Boolean(config?.stripe?.enabled);
-    updatePaidDownloadActions();
-    return stripeCheckoutEnabled;
-}
-
-async function createStripeCheckout(extra = {}) {
-    const response = await fetch(apiUrl("/api/payment/stripe/create"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            session_id: currentMusicSessionId,
-            customer_key: customerLibraryKey,
-            traffic_source: trafficSource,
-            client_name: lastFormValues?.clientName || "",
-            customer_phone: getNormalizedPreviewPhone(),
-            customer_email: getNormalizedPreviewEmail(),
-            ...extra,
-        }),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-        throw new Error(data?.error || "We could not start the Stripe checkout.");
-    }
-    return data;
-}
-
-async function startStripeCheckout(analyticsExtra = {}, extraPayload = {}) {
-    const enabled = await syncStripeCheckoutAvailability();
-    if (!enabled) {
-        throw new Error("Stripe is not available right now.");
-    }
-    const checkout = await createStripeCheckout(extraPayload);
-    if (!checkout?.checkout_url) {
-        throw new Error("We could not generate the Stripe checkout link.");
-    }
-
-    trackGa("payment_checkout_opened", buildCheckoutAnalyticsParams({
-        checkout_provider: "stripe",
-        checkout_mode: "redirect",
-        ...analyticsExtra,
-    }));
-    setMusicStatus("Redirecting you to the secure card checkout...");
-    window.location.assign(checkout.checkout_url);
-}
-
-syncStripeCheckoutAvailability().catch(() => {});
-
 async function loadPayPalSdk(config) {
     if (window.paypal) return window.paypal;
     await new Promise((resolve, reject) => {
@@ -2153,25 +2115,27 @@ if (buyPreviewCreditBtn) {
         buyPreviewCreditBtn.disabled = true;
         trackGa("begin_checkout", buildCheckoutAnalyticsParams({
             checkout_step: "sem_creditos",
-            checkout_provider: "stripe",
             customer_phone: customerPhone,
         }));
 
         try {
+            const payment = await createPayment({
+                customer_phone: customerPhone,
+                customer_email: customerEmail,
+            });
+            setMusicStatus("Payment started. Once approved, you will be able to generate and download your song.");
             if (musicUnlockWarning) {
                 musicUnlockWarning.hidden = false;
             }
-            await startStripeCheckout(
-                {
-                    checkout_step: "sem_creditos",
-                },
-                {
-                    customer_phone: customerPhone,
-                    customer_email: customerEmail,
-                }
-            );
+            const embeddedOpened = await openEmbeddedCheckout(payment, {
+                checkout_step: "sem_creditos",
+            }).catch(() => false);
+            if (!embeddedOpened) {
+                throw new Error("We could not open the embedded PayPal checkout right now.");
+            }
+            pollPaymentStatus();
         } catch (error) {
-            setMusicStatus(error.message || "We could not start the Stripe checkout.", true);
+            setMusicStatus(error.message || "We could not start payment.", true);
         } finally {
             buyPreviewCreditBtn.disabled = false;
         }
@@ -2194,15 +2158,31 @@ if (downloadBothBtn) {
         });
         trackGa("begin_checkout", buildCheckoutAnalyticsParams({
             checkout_step: "click_liberar_musica",
-            checkout_provider: "stripe",
         }));
+        trackPixel("InitiateCheckout", {
+            content_name: CHECKOUT_ITEM.item_name,
+            content_ids: [CHECKOUT_ITEM.item_id],
+            content_type: "product",
+            value: CHECKOUT_VALUE,
+            currency: "GBP",
+            num_items: 1,
+        });
         try {
-            setMusicStatus("Redirecting you to the secure card checkout...");
-            await startStripeCheckout({
+            const payment = await createPayment();
+            setMusicStatus("Payment started. As soon as approval happens, the download will be released automatically.");
+            if (downloadBothBtn) {
+                downloadBothBtn.textContent = "Waiting for song release";
+                downloadBothBtn.classList.add("is-waiting");
+            }
+            const embeddedOpened = await openEmbeddedCheckout(payment, {
                 checkout_step: "click_liberar_musica",
-            });
+            }).catch(() => false);
+            if (!embeddedOpened) {
+                throw new Error("We could not open the embedded PayPal checkout right now.");
+            }
+            pollPaymentStatus();
         } catch (error) {
-            setMusicStatus(error.message || "We could not start the Stripe checkout.", true);
+            setMusicStatus(error.message || "We could not start payment.", true);
         } finally {
             downloadBothBtn.disabled = false;
         }
