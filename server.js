@@ -77,6 +77,46 @@ app.get("/create-song", (req, res) => {
     res.redirect(301, "/");
 });
 
+app.get("/terms", (req, res) => {
+    res.sendFile(path.join(__dirname, "terms-and-conditions.html"));
+});
+
+app.get("/privacy", (req, res) => {
+    res.sendFile(path.join(__dirname, "privacy-policy.html"));
+});
+
+app.get("/delivery-and-support", (req, res) => {
+    res.sendFile(path.join(__dirname, "delivery-and-support.html"));
+});
+
+app.get("/cookies", (req, res) => {
+    res.sendFile(path.join(__dirname, "cookie-policy.html"));
+});
+
+app.get("/fazer-minha-musica.html", (req, res) => {
+    res.redirect(301, "/");
+});
+
+app.get("/minhas-musicas.html", (req, res) => {
+    res.redirect(301, "/my-songs");
+});
+
+app.get("/terms-and-conditions.html", (req, res) => {
+    res.redirect(301, "/terms");
+});
+
+app.get("/privacy-policy.html", (req, res) => {
+    res.redirect(301, "/privacy");
+});
+
+app.get("/cookie-policy.html", (req, res) => {
+    res.redirect(301, "/cookies");
+});
+
+app.get("/delivery-and-support.html", (req, res) => {
+    res.redirect(301, "/delivery-and-support");
+});
+
 app.get("/health", (req, res) => {
     res.status(200).json({ status: "ok" });
 });
