@@ -440,6 +440,14 @@ a {
     color: var(--color-text-soft);
 }
 
+.language-notice {
+    margin-top: 12px;
+    max-width: 720px;
+    font-size: 0.98rem;
+    line-height: 1.7;
+    color: rgba(29, 29, 29, 0.72);
+}
+
 .hero-points {
     display: flex;
     flex-wrap: wrap;
