@@ -1,5 +1,4 @@
-﻿const REVELATION_WHATSAPP_NUMBER = "5511916609867";
-const GENERAL_WHATSAPP_NUMBER = "5511916609867";
+const WHATSAPP_NUMBER = "5511916609867";
 
 function normalizeVoiceGender(value = "") {
     const normalized = String(value || "").trim().toLowerCase();
@@ -24,7 +23,6 @@ const OCCASIONS = {
         label: "Baby arrival",
         type: "Family",
         intro: "Questions designed to capture anticipation, tenderness, and the emotion of welcoming a new life.",
-        whatsappNumber: REVELATION_WHATSAPP_NUMBER,
         fields: [
             { id: "clientName", label: "Your name", type: "text", placeholder: "Who is creating this song?" },
             { id: "parentsNames", label: "Parents' names", type: "text", placeholder: "Example: Olivia and James" },
@@ -52,7 +50,6 @@ const OCCASIONS = {
         label: "Birthday",
         type: "Celebration",
         intro: "Perfect for turning memories, affection, and admiration into a warm, celebratory song.",
-        whatsappNumber: GENERAL_WHATSAPP_NUMBER,
         fields: [
             { id: "clientName", label: "Your name", type: "text", placeholder: "Who is giving this gift?" },
             { id: "personName", label: "Name of the person being celebrated", type: "text", placeholder: "Example: Charlotte" },
@@ -77,7 +74,6 @@ const OCCASIONS = {
         label: "Tribute",
         type: "Affection",
         intro: "For gratitude, admiration, and honouring someone whose presence shaped your life.",
-        whatsappNumber: GENERAL_WHATSAPP_NUMBER,
         fields: [
             { id: "clientName", label: "Your name", type: "text", placeholder: "Who is creating this tribute?" },
             { id: "personName", label: "Name of the person being honoured", type: "text", placeholder: "Example: Margaret" },
@@ -101,7 +97,6 @@ const OCCASIONS = {
         label: "Father's Day",
         type: "Family",
         intro: "Focused on gratitude, legacy, and the quiet ways a father leaves love behind.",
-        whatsappNumber: GENERAL_WHATSAPP_NUMBER,
         fields: [
             { id: "clientName", label: "Your name", type: "text", placeholder: "Who is creating this tribute?" },
             { id: "fatherName", label: "Father's name", type: "text", placeholder: "Example: David" },
@@ -125,7 +120,6 @@ const OCCASIONS = {
         label: "Mother's Day",
         type: "Family",
         intro: "A gentle path for writing a song about care, gratitude, resilience, and love.",
-        whatsappNumber: GENERAL_WHATSAPP_NUMBER,
         fields: [
             { id: "clientName", label: "Your name", type: "text", placeholder: "Who is creating this tribute?" },
             { id: "motherName", label: "Mother's name", type: "text", placeholder: "Example: Eleanor" },
@@ -149,7 +143,6 @@ const OCCASIONS = {
         label: "Apology",
         type: "Reconnection",
         intro: "Built for sincerity, regret, and the hope of rebuilding something that still matters.",
-        whatsappNumber: GENERAL_WHATSAPP_NUMBER,
         fields: [
             { id: "clientName", label: "Your name", type: "text", placeholder: "Who is apologising?" },
             { id: "personName", label: "Their name", type: "text", placeholder: "Example: Amelia" },
@@ -173,7 +166,6 @@ const OCCASIONS = {
         label: "Relationship proposal",
         type: "Romance",
         intro: "For romantic songs that build naturally toward asking someone to begin a love story with you.",
-        whatsappNumber: GENERAL_WHATSAPP_NUMBER,
         fields: [
             { id: "clientName", label: "Your name", type: "text", placeholder: "Who will ask the question?" },
             { id: "personName", label: "Their name", type: "text", placeholder: "Example: Sophie" },
@@ -197,7 +189,6 @@ const OCCASIONS = {
         label: "Romantic Song",
         type: "Romance",
         intro: "A timeless romantic song shaped around how your story began, what deepened it, and the details that make this love feel unmistakably yours.",
-        whatsappNumber: GENERAL_WHATSAPP_NUMBER,
         fields: [
             { id: "lovedOneName", label: "Name of the loved one", type: "text", placeholder: "Example: Isabella" },
             { id: "clientName", label: "Who is requesting the song?", type: "text", placeholder: "Who is creating this song?" },
@@ -222,7 +213,6 @@ const OCCASIONS = {
         label: "Marriage proposal",
         type: "Romance",
         intro: "For songs that hold history, courage, tenderness, and the promise of a shared future.",
-        whatsappNumber: GENERAL_WHATSAPP_NUMBER,
         fields: [
             { id: "clientName", label: "Your name", type: "text", placeholder: "Who will ask the question?" },
             { id: "personName", label: "Their name", type: "text", placeholder: "Example: Emily" },
@@ -246,7 +236,6 @@ const OCCASIONS = {
         label: "I already have the lyrics",
         type: "Ready lyrics",
         intro: "Paste your lyrics and choose the voice and style to generate the song without filling in the questionnaire.",
-        whatsappNumber: GENERAL_WHATSAPP_NUMBER,
         ownLyrics: true,
         fields: []
     }
@@ -694,7 +683,7 @@ function updateWhatsAppLink() {
     const lines = [];
     lines.push("I am creating a song on the site and would love some help.");
     const message = encodeURIComponent(lines.join(""));
-    whatsappBriefLink.href = `https://wa.me/${lastOccasionConfig.whatsappNumber}?text=${message}`;
+    whatsappBriefLink.href = `https://wa.me/${lastOccasionConfig.whatsappNumber || WHATSAPP_NUMBER}?text=${message}`;
 }
 
 if (whatsappBriefLink) {
