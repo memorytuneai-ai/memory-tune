@@ -7,6 +7,33 @@ function normalizeVoiceGender(value = "") {
     return "female";
 }
 
+function bindCopyLyricsButton(container) {
+    const btn = container?.querySelector(".btn-copy-lyrics");
+    if (!btn) return;
+    btn.addEventListener("click", () => {
+        const editor = container.querySelector(".lyrics-editor");
+        if (!editor) return;
+        const text = editor.value || editor.textContent || "";
+        navigator.clipboard.writeText(text).then(() => {
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+            btn.classList.add("is-copied");
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy lyrics';
+                btn.classList.remove("is-copied");
+            }, 2000);
+        }).catch(() => {
+            editor.select();
+            document.execCommand("copy");
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+            btn.classList.add("is-copied");
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy lyrics';
+                btn.classList.remove("is-copied");
+            }, 2000);
+        });
+    });
+}
+
 function sanitizeLyricsText(value = "") {
     return String(value || "")
         .replace(/\r/g, "")
@@ -760,9 +787,16 @@ function renderPreview(preview, config, values) {
 
     lyricsOutput.innerHTML = `
         <div class="lyrics-block lyrics-block-single">
+            <div class="lyrics-block-actions">
+                <button type="button" class="btn-copy-lyrics" title="Copy lyrics">
+                    <i class="fa-regular fa-copy"></i> Copy lyrics
+                </button>
+            </div>
             <textarea class="lyrics-editor lyrics-editor-single" rows="18">${fullLyrics}</textarea>
         </div>
     `;
+
+    bindCopyLyricsButton(lyricsOutput);
 
     const editor = lyricsOutput.querySelector(".lyrics-editor");
     if (editor) {
@@ -803,10 +837,16 @@ async function hydrateSavedMusicSession(session) {
         lyricsOutput.innerHTML = restoredLyrics
             ? `
                 <div class="lyrics-block lyrics-block-single">
+                    <div class="lyrics-block-actions">
+                        <button type="button" class="btn-copy-lyrics" title="Copy lyrics">
+                            <i class="fa-regular fa-copy"></i> Copy lyrics
+                        </button>
+                    </div>
                     <textarea class="lyrics-editor lyrics-editor-single" rows="18">${restoredLyrics}</textarea>
                 </div>
             `
             : "";
+        if (restoredLyrics) bindCopyLyricsButton(lyricsOutput);
     }
 
     if (musicStyle && session.style) {

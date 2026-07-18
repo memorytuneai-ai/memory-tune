@@ -764,6 +764,44 @@ a {
     padding: 24px 24px 20px;
 }
 
+.lyrics-block-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+}
+
+.btn-copy-lyrics {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    border-radius: 10px;
+    background: rgba(212, 175, 55, 0.08);
+    color: var(--color-gold-bright, #d4af37);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-copy-lyrics:hover {
+    background: rgba(212, 175, 55, 0.18);
+    border-color: rgba(212, 175, 55, 0.45);
+    transform: translateY(-1px);
+}
+
+.btn-copy-lyrics:active {
+    transform: scale(0.96);
+}
+
+.btn-copy-lyrics.is-copied {
+    background: rgba(76, 175, 80, 0.15);
+    border-color: rgba(76, 175, 80, 0.4);
+    color: #66bb6a;
+}
+
 .lyrics-editor-single {
     min-height: 420px;
     font-size: 1.02rem;
