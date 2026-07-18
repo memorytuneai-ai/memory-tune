@@ -1251,17 +1251,28 @@ function buildMusicReadyEmailHtml(session, baseUrl) {
         <div style="font-family:Arial,Helvetica,sans-serif;background:#0d0d0d;color:#f5ead1;padding:32px 20px;">
             <div style="max-width:620px;margin:0 auto;background:#171717;border:1px solid #5f4a16;border-radius:20px;padding:32px;">
                 <p style="margin:0 0 16px;font-size:16px;color:#f5ead1;">Hello, ${clientName}.</p>
-                <h1 style="margin:0 0 16px;font-size:28px;line-height:1.2;color:#fff5dc;">Your Memory Tune song is ready</h1>
-                <p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#eadfbf;">${title}</p>
-                <div style="margin:0 0 24px;padding:20px;border-radius:16px;background:#111725;border:1px solid #2e3a5d;">
-                    <p style="margin:0 0 12px;font-size:15px;color:#cfd9ff;">Download your versions:</p>
-                    <p style="margin:0 0 10px;"><a href="${downloadUrl1}" style="color:#ffd54d;">Download version 1</a></p>
-                    <p style="margin:0;"><a href="${downloadUrl2}" style="color:#ffd54d;">Download version 2</a></p>
+                <h1 style="margin:0 0 16px;font-size:26px;line-height:1.3;color:#fff5dc;">🎵 Your Memory Tune song is ready!</h1>
+                <p style="margin:0 0 24px;font-size:18px;font-weight:bold;line-height:1.6;color:#eadfbf;">${title}</p>
+                
+                <div style="background:#f7f7f7;padding:24px;border-radius:12px;color:#333333;margin:0 0 24px;">
+                    <h3 style="margin:0 0 16px;font-size:18px;color:#111111;">Download your songs</h3>
+                    
+                    <p style="margin:0 0 12px;font-size:15px;">🔗 <strong>Version 1:</strong> <a href="${downloadUrl1}" style="color:#0056b3;font-weight:bold;text-decoration:none;">Download Version 1</a></p>
+                    <p style="margin:0 0 24px;font-size:15px;">🔗 <strong>Version 2:</strong> <a href="${downloadUrl2}" style="color:#0056b3;font-weight:bold;text-decoration:none;">Download Version 2</a></p>
+
+                    <p style="margin:0 0 6px;font-size:15px;color:#111111;"><strong>How to download:</strong></p>
+                    <p style="margin:0 0 20px;font-size:14px;line-height:1.5;">Open the link, click the <strong>three dots (⋯)</strong> in the player, and select <strong>Download</strong>.</p>
+                    
+                    <p style="margin:0 0 6px;font-size:15px;color:#d93025;"><strong>Important:</strong></p>
+                    <p style="margin:0;font-size:14px;line-height:1.5;">Please download and save your songs to your device as soon as possible. Your download links will remain available for <strong>10 days only</strong>. After that period, the files are automatically removed from our servers and can no longer be accessed.</p>
                 </div>
-                <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#eadfbf;">You can also access your library here:</p>
-                <p style="margin:0 0 24px;"><a href="${escapeHtml(libraryUrl)}" style="color:#ffd54d;">Open My songs</a></p>
-                <p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#c8c8c8;">If you need help, our team is here:</p>
-                <p style="margin:0;"><a href="${supportUrl}" style="color:#ffd54d;">Memory Tune WhatsApp</a></p>
+
+                <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#eadfbf;">You can also access your music library here:</p>
+                <p style="margin:0 0 32px;">🔗 <strong><a href="${escapeHtml(libraryUrl)}" style="color:#ffd54d;text-decoration:none;">Open My Songs</a></strong></p>
+
+                <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#c8c8c8;">If you have any questions or need assistance, simply <strong>reply to this email</strong> and our team will be happy to help.</p>
+                
+                <p style="margin:0;font-size:15px;line-height:1.6;color:#eadfbf;">Thank you for choosing <strong>Memory Tune</strong>. We hope you enjoy your personalized song! 💙</p>
             </div>
         </div>
     `;
