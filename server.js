@@ -116,6 +116,14 @@ app.get("/cookie-policy.html", (req, res) => {
     res.redirect(301, "/cookies");
 });
 
+app.get("/about", (req, res) => {
+    res.sendFile(path.join(__dirname, "about.html"));
+});
+
+app.get("/about.html", (req, res) => {
+    res.redirect(301, "/about");
+});
+
 app.get("/delivery-and-support.html", (req, res) => {
     res.redirect(301, "/delivery-and-support");
 });
