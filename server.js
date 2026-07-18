@@ -1276,8 +1276,10 @@ function escapeHtml(value) {
 function buildMusicReadyEmailHtml(session, baseUrl) {
     const clientName = escapeHtml(session.clientName || "Customer");
     const title = escapeHtml(session.title || "Your Memory Tune song is ready");
-    const downloadUrl1 = escapeHtml(session.downloadUrl1 || "");
-    const downloadUrl2 = escapeHtml(session.downloadUrl2 || "");
+    const proxyUrl1 = session.downloadUrl1 ? `${GLOBAL_BASE_URL}/api/download?url=${encodeURIComponent(session.downloadUrl1)}` : "";
+    const proxyUrl2 = session.downloadUrl2 ? `${GLOBAL_BASE_URL}/api/download?url=${encodeURIComponent(session.downloadUrl2)}` : "";
+    const downloadUrl1 = escapeHtml(proxyUrl1);
+    const downloadUrl2 = escapeHtml(proxyUrl2);
     const libraryUrl = `${baseUrl}/my-songs?session_id=${encodeURIComponent(session.sessionId || "")}`;
     const supportUrl = `https://wa.me/5511916609867`;
 
