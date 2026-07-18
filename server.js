@@ -28,7 +28,7 @@ const LEGACY_PAYPAL_PRICE_GBP = Number(process.env.PAYPAL_PRICE_GBP || (isPromo 
 const LEGACY_PAYPAL_CURRENCY = process.env.PAYPAL_CURRENCY || "GBP";
 const LEGACY_PAYPAL_TITLE = process.env.PAYPAL_TITLE || "Memory Tune personalised song";
 const CHECKOUT_TITLE = process.env.CHECKOUT_TITLE || process.env.STRIPE_TITLE || LEGACY_PAYPAL_TITLE;
-const CHECKOUT_PRICE_GBP = Number(process.env.STRIPE_PRICE_GBP || (isPromo ? 9.90 : 14.99));
+const getCheckoutPriceGbp = () => (Date.now() < PROMO_END) ? 9.90 : 14.99;
 const STRIPE_CURRENCY = String(process.env.STRIPE_CURRENCY || "gbp").toLowerCase();
 const PAYPAL_PRICE_GBP = LEGACY_PAYPAL_PRICE_GBP;
 const PAYPAL_CURRENCY = LEGACY_PAYPAL_CURRENCY;
@@ -125,13 +125,13 @@ app.get("/health", (req, res) => {
 app.get("/api/payment/config", (req, res) => {
     res.json({
         provider: "stripe",
-        amount: CHECKOUT_PRICE_GBP,
+        amount: getCheckoutPriceGbp(),
         currency: STRIPE_CURRENCY,
         title: CHECKOUT_TITLE,
         stripe: {
             enabled: Boolean(STRIPE_SECRET_KEY),
             publishable_key: STRIPE_PUBLISHABLE_KEY || null,
-            amount: CHECKOUT_PRICE_GBP,
+            amount: getCheckoutPriceGbp(),
             currency: STRIPE_CURRENCY,
             title: CHECKOUT_TITLE,
         },
@@ -403,8 +403,8 @@ function persistOrderReports() {
 }
 
 function getOrderAmountBrl(existing = {}, payload = {}) {
-    const amount = Number(payload.amountBrl ?? existing.amountBrl ?? CHECKOUT_PRICE_GBP ?? (isPromo ? 9.90 : 14.99));
-    return Number.isFinite(amount) && amount > 0 ? amount : (isPromo ? 9.90 : 14.99);
+    const amount = Number(payload.amountBrl ?? existing.amountBrl ?? getCheckoutPriceGbp());
+    return Number.isFinite(amount) && amount > 0 ? amount : getCheckoutPriceGbp();
 }
 
 function normalizeTrafficSource(source = {}) {
@@ -1990,8 +1990,8 @@ app.post("/api/payment/stripe/create", async (req, res) => {
         if (!STRIPE_SECRET_KEY) {
             return res.status(400).json({ error: "Stripe is not configured in the environment." });
         }
-        if (!CHECKOUT_PRICE_GBP || Number.isNaN(CHECKOUT_PRICE_GBP)) {
-            return res.status(400).json({ error: "STRIPE_PRICE_GBP is not configured in the environment." });
+        if (!getCheckoutPriceGbp() || Number.isNaN(getCheckoutPriceGbp())) {
+            return res.status(400).json({ error: "Price configuration error." });
         }
 
         const {
@@ -2034,7 +2034,7 @@ app.post("/api/payment/stripe/create", async (req, res) => {
                     quantity: 1,
                     price_data: {
                         currency: STRIPE_CURRENCY,
-                        unit_amount: Math.round(CHECKOUT_PRICE_GBP * 100),
+                        unit_amount: Math.round(getCheckoutPriceGbp() * 100),
                         product_data: {
                             name: CHECKOUT_TITLE,
                             description: "Personalised Memory Tune song checkout",
