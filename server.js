@@ -1,4 +1,4 @@
-﻿require("dotenv").config();
+require("dotenv").config();
 
 const express = require("express");
 const crypto = require("crypto");
@@ -1339,14 +1339,14 @@ function buildSunoVoiceDirectives(voiceGender, style) {
     const normalizedStyle = String(style || "").trim();
     if (normalizedVoiceGender === "male") {
         return {
-            style: normalizedStyle,
-            negativeTags: ["female vocal", "woman singing", "feminine voice", "soprano", "alto female"],
+            style: normalizedStyle ? `${normalizedStyle}, male vocals, male singer` : "male vocals, male singer",
+            negativeTags: ["female vocal", "woman singing", "feminine voice", "soprano", "alto female", "duet", "multiple voices"],
         };
     }
 
     return {
-        style: normalizedStyle,
-        negativeTags: ["male vocal", "man singing", "masculine voice", "baritone", "deep male voice"],
+        style: normalizedStyle ? `${normalizedStyle}, female vocals, female singer` : "female vocals, female singer",
+        negativeTags: ["male vocal", "man singing", "masculine voice", "baritone", "deep male voice", "duet", "multiple voices"],
     };
 }
 
@@ -1479,7 +1479,7 @@ app.post("/api/music/create", async (req, res) => {
 
         const normalizedVoiceGender = normalizeVoiceGender(voiceGender);
         if (normalizedVoiceGender && !makeInstrumental) {
-            payload.vocalGender = normalizedVoiceGender;
+            payload.vocalGender = normalizedVoiceGender === "male" ? "m" : "f";
         }
 
         const negativeTags = [];
