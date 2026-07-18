@@ -11,6 +11,16 @@ const CURRENT_SESSION_KEY = "ss_current_music_session";
 const PREVIEW_SECONDS = 40;
 let stripeCheckoutEnabled = false;
 
+function trackPixel(eventName, data) {
+    if (typeof window.fbq !== "function") return;
+    window.fbq("track", eventName, data || {});
+}
+
+function trackGa(eventName, params) {
+    if (typeof window.gtag !== "function") return;
+    window.gtag("event", eventName, params || {});
+}
+
 function normalizeVoiceGender(value = "") {
     const normalized = String(value || "").trim().toLowerCase();
     if (["male", "masculina", "masculine", "man"].includes(normalized)) return "Male";
@@ -837,8 +847,29 @@ async function loadLibrary() {
 
     if (sessionId && stripeSessionId) {
         try {
-            await confirmStripePayment(sessionId, stripeSessionId);
+            const confirmResult = await confirmStripePayment(sessionId, stripeSessionId);
             setLibraryStatus("Stripe payment identified. We are updating your library.");
+            
+            if (confirmResult?.paid) {
+                trackPixel("Purchase", {
+                    content_name: "Memory Tune personalised song",
+                    content_ids: ["memory-tune-personalised-song"],
+                    content_type: "product",
+                    value: confirmResult.amount || 9.90,
+                    currency: "GBP",
+                });
+                trackGa("purchase", {
+                    transaction_id: sessionId,
+                    value: confirmResult.amount || 9.90,
+                    currency: "GBP",
+                    items: [{ item_id: "memory-tune-personalised-song", item_name: "Memory Tune personalised song", quantity: 1 }],
+                });
+                trackGa("conversion_event_purchase", {
+                    transaction_id: sessionId,
+                    value: confirmResult.amount || 9.90,
+                    currency: "GBP",
+                });
+            }
         } catch (error) {
             setLibraryStatus(error.message || "We could not confirm your Stripe payment yet.", true);
         }
