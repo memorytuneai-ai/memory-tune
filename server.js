@@ -4,6 +4,7 @@ const express = require("express");
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
+const { Readable } = require("stream");
 const Stripe = require("stripe");
 
 const app = express();
@@ -12,6 +13,7 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL = "gemini-2.5-flash";
 const GEMINI_TEMPERATURE = Number(process.env.GEMINI_TEMPERATURE || 0.82);
 const KIE_SUNO_API_KEY = process.env.KIE_SUNO_API_KEY || process.env.KIE_API_KEY || "";
+const GLOBAL_BASE_URL = process.env.BASE_URL || "https://memorytune.ai";
 const KIE_SUNO_MODEL = process.env.KIE_SUNO_MODEL || "V4_5";
 const KIE_SUNO_CALLBACK_URL = process.env.KIE_SUNO_CALLBACK_URL || "";
 const KIE_SUNO_NEGATIVE_TAGS = process.env.KIE_SUNO_NEGATIVE_TAGS || "";
@@ -129,13 +131,45 @@ app.get("/api/payment/config", (req, res) => {
         currency: STRIPE_CURRENCY,
         title: CHECKOUT_TITLE,
         stripe: {
-            enabled: Boolean(STRIPE_SECRET_KEY),
+            enabled: !!(STRIPE_PUBLISHABLE_KEY && STRIPE_SECRET_KEY && STRIPE_WEBHOOK_SECRET),
             publishable_key: STRIPE_PUBLISHABLE_KEY || null,
             amount: getCheckoutPriceGbp(),
             currency: STRIPE_CURRENCY,
             title: CHECKOUT_TITLE,
         },
     });
+});
+
+app.get("/api/download", async (req, res) => {
+    try {
+        const fileUrl = req.query.url;
+        if (!fileUrl) {
+            return res.status(400).send("URL parameter is missing.");
+        }
+        const response = await fetch(fileUrl);
+        if (!response.ok) {
+            return res.status(response.status).send("Failed to fetch the file.");
+        }
+        
+        const contentType = response.headers.get("content-type") || "audio/mpeg";
+        const urlPath = new URL(fileUrl).pathname;
+        let filename = urlPath.split('/').pop() || "MemoryTune_Song.mp3";
+        if (!filename.includes('.')) {
+            filename += contentType.includes("mp4") || contentType.includes("video") ? ".mp4" : ".mp3";
+        }
+        
+        res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+        res.setHeader("Content-Type", contentType);
+        
+        if (response.body) {
+            Readable.fromWeb(response.body).pipe(res);
+        } else {
+            res.status(500).send("No content to stream.");
+        }
+    } catch (error) {
+        console.error("Download proxy error:", error);
+        res.status(500).send("Error downloading the file.");
+    }
 });
 
 function getStripeClient() {
@@ -765,8 +799,8 @@ function serializeOrderReport(order) {
         paid_at: order.paidAt || "",
         updated_at: order.updatedAt || "",
         expires_at: order.expiresAt || "",
-        download_url_1: order.downloadUrl1 || "",
-        download_url_2: order.downloadUrl2 || "",
+        download_url_1: order.downloadUrl1 ? `${GLOBAL_BASE_URL}/api/download?url=${encodeURIComponent(order.downloadUrl1)}` : "",
+        download_url_2: order.downloadUrl2 ? `${GLOBAL_BASE_URL}/api/download?url=${encodeURIComponent(order.downloadUrl2)}` : "",
         utm_source: trafficSource.utmSource,
         utm_medium: trafficSource.utmMedium,
         utm_campaign: trafficSource.utmCampaign,
