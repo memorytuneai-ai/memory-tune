@@ -1,4 +1,4 @@
-﻿const libraryGrid = document.getElementById("libraryGrid");
+const libraryGrid = document.getElementById("libraryGrid");
 const libraryEmpty = document.getElementById("libraryEmpty");
 const libraryStatus = document.getElementById("libraryStatus");
 const libraryIntro = document.getElementById("libraryIntro");
@@ -724,6 +724,8 @@ function renderLibraryItem(item) {
           `
         : "";
 
+    const audioControlsAttrs = item.paid ? "" : 'controlsList="nodownload noplaybackrate" disablePictureInPicture';
+
     return `
         <article class="library-card" data-session-id="${item.session_id}">
             <div class="library-card-head">
@@ -743,11 +745,11 @@ function renderLibraryItem(item) {
             <div class="library-audios">
                 <div class="library-audio-card">
                     <strong>Preview 1</strong>
-                    <audio controls controlsList="nodownload noplaybackrate" disablePictureInPicture src="${previewUrl1}"></audio>
+                    <audio controls ${audioControlsAttrs} src="${previewUrl1}"></audio>
                 </div>
                 <div class="library-audio-card">
                     <strong>Preview 2</strong>
-                    <audio controls controlsList="nodownload noplaybackrate" disablePictureInPicture src="${previewUrl2}"></audio>
+                    <audio controls ${audioControlsAttrs} src="${previewUrl2}"></audio>
                 </div>
             </div>
             <div class="library-card-actions">

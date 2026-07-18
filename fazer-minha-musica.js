@@ -1389,6 +1389,15 @@ function applyPreviewPlaybackState() {
                 audioEl.src = nextUrl;
             }
             audioEl.controls = true;
+            
+            if (paymentApproved) {
+                audioEl.removeAttribute("controlsList");
+                audioEl.removeAttribute("disablePictureInPicture");
+            } else {
+                audioEl.setAttribute("controlsList", "nodownload noplaybackrate");
+                audioEl.setAttribute("disablePictureInPicture", "true");
+            }
+            
             attachPreviewLimiter(audioEl);
         } else {
             audioEl.pause();
