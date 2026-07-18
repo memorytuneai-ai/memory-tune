@@ -39,7 +39,7 @@ services:
       - key: PURCHASE_REWARD_CREDITS
         value: 2
       - key: STRIPE_PRICE_GBP
-        value: 14.99
+        value: 9.90
       - key: STRIPE_CURRENCY
         value: gbp
     disk:
