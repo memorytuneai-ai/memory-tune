@@ -1,4 +1,4 @@
-﻿:root {
+:root {
     --color-black: #050505;
     --color-black-soft: #111111;
     --color-white: #ffffff;
@@ -3696,4 +3696,37 @@ body.memory-body .hero-logo-art {
         max-width: none;
         text-align: left;
     }
+}
+
+.price-display {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.price-display .old-price {
+    font-size: 1.4rem;
+    text-decoration: line-through;
+    opacity: 0.5;
+    font-family: "Cormorant Garamond", serif;
+    font-weight: 600;
+}
+
+.promo-countdown {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #b03a3a;
+    background: rgba(176, 58, 58, 0.08);
+    padding: 6px 12px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.promo-countdown i {
+    font-size: 1.1em;
 }

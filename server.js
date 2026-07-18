@@ -21,11 +21,11 @@ const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID || "";
 const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET || "";
 const PAYPAL_ENV = String(process.env.PAYPAL_ENV || "sandbox").toLowerCase() === "live" ? "live" : "sandbox";
-const LEGACY_PAYPAL_PRICE_GBP = Number(process.env.PAYPAL_PRICE_GBP || 14.99);
+const LEGACY_PAYPAL_PRICE_GBP = Number(process.env.PAYPAL_PRICE_GBP || 9.90);
 const LEGACY_PAYPAL_CURRENCY = process.env.PAYPAL_CURRENCY || "GBP";
 const LEGACY_PAYPAL_TITLE = process.env.PAYPAL_TITLE || "Memory Tune personalised song";
 const CHECKOUT_TITLE = process.env.CHECKOUT_TITLE || process.env.STRIPE_TITLE || LEGACY_PAYPAL_TITLE;
-const CHECKOUT_PRICE_GBP = Number(process.env.STRIPE_PRICE_GBP || process.env.PAYPAL_PRICE_GBP || 14.99);
+const CHECKOUT_PRICE_GBP = Number(process.env.STRIPE_PRICE_GBP || process.env.PAYPAL_PRICE_GBP || 9.90);
 const STRIPE_CURRENCY = String(process.env.STRIPE_CURRENCY || "gbp").toLowerCase();
 const PAYPAL_PRICE_GBP = LEGACY_PAYPAL_PRICE_GBP;
 const PAYPAL_CURRENCY = LEGACY_PAYPAL_CURRENCY;
@@ -400,8 +400,8 @@ function persistOrderReports() {
 }
 
 function getOrderAmountBrl(existing = {}, payload = {}) {
-    const amount = Number(payload.amountBrl ?? existing.amountBrl ?? CHECKOUT_PRICE_GBP ?? 14.99);
-    return Number.isFinite(amount) && amount > 0 ? amount : 14.99;
+    const amount = Number(payload.amountBrl ?? existing.amountBrl ?? CHECKOUT_PRICE_GBP ?? 9.90);
+    return Number.isFinite(amount) && amount > 0 ? amount : 9.90;
 }
 
 function normalizeTrafficSource(source = {}) {
