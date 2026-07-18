@@ -478,11 +478,15 @@
     <script src="fazer-minha-musica.js"></script>
     <script>
         function updatePromoCountdown() {
-            const endDate = new Date('2026-07-19T23:59:59').getTime();
+            const endDate = new Date('2026-07-20T02:59:59Z').getTime(); // 23:59:59 Brazil time = 02:59:59Z next day
             const now = new Date().getTime();
             const distance = endDate - now;
 
             if (distance < 0) {
+                document.querySelectorAll('.old-price').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('.promo-countdown').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('.price-kicker').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('.price-display strong').forEach(el => el.innerText = '£14.99');
                 const el = document.getElementById('promo-countdown-timer');
                 if (el) el.innerHTML = "PROMO ENDED";
                 return;

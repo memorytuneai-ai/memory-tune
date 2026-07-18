@@ -1098,7 +1098,10 @@ form?.addEventListener("input", () => {
     });
 });
 
-const CHECKOUT_VALUE = 9.90;
+const PROMO_END = new Date("2026-07-20T02:59:59Z").getTime();
+const IS_PROMO = Date.now() < PROMO_END;
+const CHECKOUT_VALUE = IS_PROMO ? 9.90 : 14.99;
+const CHECKOUT_PRICE_TEXT = IS_PROMO ? "£9.90" : "£14.99";
 const CHECKOUT_ITEM = {
     item_id: "memory-tune-personalised-song",
     item_name: "Memory Tune personalised song",
@@ -1168,7 +1171,7 @@ function ensurePreviewCreditFields() {
         buyPreviewCreditBtn.type = "button";
         buyPreviewCreditBtn.className = "btn btn-outline";
         buyPreviewCreditBtn.hidden = true;
-        buyPreviewCreditBtn.textContent = "Unlock my full song for £9.90";
+        buyPreviewCreditBtn.textContent = `Unlock my full song for ${CHECKOUT_PRICE_TEXT}`;
         generateMusicBtn.insertAdjacentElement("afterend", buyPreviewCreditBtn);
     }
 }
@@ -1195,7 +1198,7 @@ function resetGeneratedMusicState({ clearSession = false } = {}) {
     if (musicUnlockWarning) musicUnlockWarning.hidden = true;
     if (confirmPaymentBtn) confirmPaymentBtn.hidden = true;
     if (downloadBothBtn) {
-        downloadBothBtn.textContent = "Unlock my full song for £9.90";
+        downloadBothBtn.textContent = `Unlock my full song for ${CHECKOUT_PRICE_TEXT}`;
         downloadBothBtn.classList.remove("is-waiting", "is-ready");
         downloadBothBtn.disabled = false;
     }
@@ -1323,7 +1326,7 @@ function updatePaidDownloadActions() {
 
     if (downloadBothBtn) {
         downloadBothBtn.hidden = hasPaidDownloads;
-        downloadBothBtn.textContent = "Unlock my full song for £9.90";
+        downloadBothBtn.textContent = `Unlock my full song for ${CHECKOUT_PRICE_TEXT}`;
         downloadBothBtn.classList.toggle("is-ready", paymentApproved);
         downloadBothBtn.classList.remove("is-waiting");
         downloadBothBtn.disabled = false;
@@ -1671,7 +1674,7 @@ if (generateMusicBtn) {
             setProgress(
                 3,
                 paymentApproved ? "Full song ready" : previewPlaybackUnlocked ? "40-second previews ready" : "Previews ready to unlock",
-                paymentApproved ? "Your download is now available." : previewPlaybackUnlocked ? "Unlock your full song for £9.90." : "Complete payment to listen to your previews and unlock the full song.",
+                paymentApproved ? "Your download is now available." : previewPlaybackUnlocked ? `Unlock your full song for ${CHECKOUT_PRICE_TEXT}.` : "Complete payment to listen to your previews and unlock the full song.",
                 100
             );
             if (confirmPaymentBtn) confirmPaymentBtn.hidden = true;
@@ -1689,7 +1692,7 @@ if (generateMusicBtn) {
                 paymentApproved
                     ? "Your full song is ready. You can now download both versions."
                     : previewPlaybackUnlocked
-                        ? `Your 40-second previews are ready. Unlock your full song for £9.90.${creditMessage}`
+                        ? `Your 40-second previews are ready. Unlock your full song for ${CHECKOUT_PRICE_TEXT}.${creditMessage}`
                         : "Your previews are ready. Complete payment to listen and unlock your full song."
             );
         } catch (error) {
@@ -2238,7 +2241,7 @@ if (downloadBothBtn) {
         } catch (error) {
             setMusicStatus(error.message || "We could not start payment.", true);
             if (downloadBothBtn) {
-                downloadBothBtn.textContent = "Unlock my full song for £9.90";
+                downloadBothBtn.textContent = `Unlock my full song for ${CHECKOUT_PRICE_TEXT}`;
                 downloadBothBtn.classList.remove("is-waiting");
             }
         } finally {
