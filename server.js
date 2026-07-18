@@ -13,7 +13,7 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL = "gemini-2.5-flash";
 const GEMINI_TEMPERATURE = Number(process.env.GEMINI_TEMPERATURE || 0.82);
 const KIE_SUNO_API_KEY = process.env.KIE_SUNO_API_KEY || process.env.KIE_API_KEY || "";
-const GLOBAL_BASE_URL = process.env.BASE_URL || "";
+const GLOBAL_BASE_URL = process.env.BASE_URL || "https://memorytune.co.uk";
 const KIE_SUNO_MODEL = process.env.KIE_SUNO_MODEL || "V4_5";
 const KIE_SUNO_CALLBACK_URL = process.env.KIE_SUNO_CALLBACK_URL || "";
 const KIE_SUNO_NEGATIVE_TAGS = process.env.KIE_SUNO_NEGATIVE_TAGS || "";
@@ -799,8 +799,8 @@ function serializeOrderReport(order) {
         paid_at: order.paidAt || "",
         updated_at: order.updatedAt || "",
         expires_at: order.expiresAt || "",
-        download_url_1: order.downloadUrl1 || "",
-        download_url_2: order.downloadUrl2 || "",
+        download_url_1: order.downloadUrl1 ? `${GLOBAL_BASE_URL}/api/download?url=${encodeURIComponent(order.downloadUrl1)}` : "",
+        download_url_2: order.downloadUrl2 ? `${GLOBAL_BASE_URL}/api/download?url=${encodeURIComponent(order.downloadUrl2)}` : "",
         utm_source: trafficSource.utmSource,
         utm_medium: trafficSource.utmMedium,
         utm_campaign: trafficSource.utmCampaign,
