@@ -599,6 +599,84 @@ a {
     gap: 18px;
 }
 
+/* Coupon Section */
+.coupon-section {
+    margin-top: 48px;
+    display: flex;
+    justify-content: center;
+}
+
+.coupon-wrapper {
+    background: rgba(26, 26, 26, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 480px;
+    width: 100%;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.coupon-wrapper label {
+    display: block;
+    color: var(--color-gold-bright);
+    font-weight: 600;
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+    letter-spacing: 0.03em;
+}
+
+.coupon-input-group {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.coupon-input {
+    flex: 1;
+    background: rgba(10, 10, 10, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 1rem;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+}
+
+.coupon-input:focus {
+    outline: none;
+    border-color: var(--color-gold);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+}
+
+.coupon-input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+    text-transform: none;
+}
+
+#applyCouponBtn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.coupon-status {
+    font-size: 0.85rem;
+    min-height: 20px;
+    transition: color 0.2s ease;
+    margin: 0;
+}
+
+.coupon-status.success {
+    color: #4caf50; /* Green */
+}
+
+.coupon-status.error {
+    color: #f44336; /* Red */
+}
+
 .form-row {
     display: grid;
     gap: 10px;

@@ -289,6 +289,12 @@ const progressSteps = document.getElementById("progressSteps");
 const progressTitle = document.getElementById("progressTitle");
 const progressSubtitle = document.getElementById("progressSubtitle");
 const progressFill = document.getElementById("progressFill");
+
+const discountCouponInput = document.getElementById("discountCoupon");
+const applyCouponBtn = document.getElementById("applyCouponBtn");
+const couponStatusMessage = document.getElementById("couponStatusMessage");
+let appliedCouponCode = "";
+
 let isMusicGenerating = false;
 let hasMusicReady = false;
 
@@ -2065,6 +2071,10 @@ async function startStripeCheckout(analyticsExtra = {}, extraPayload = {}) {
         throw new Error("Stripe is not available right now.");
     }
 
+    if (appliedCouponCode) {
+        extraPayload.coupon_code = appliedCouponCode;
+    }
+
     const checkout = await createStripeCheckout(extraPayload);
     if (!checkout?.checkout_url) {
         throw new Error("We could not generate the Stripe checkout link.");
@@ -2323,6 +2333,48 @@ if (downloadVersion2Btn) {
             setMusicStatus(error.message || "The download will be released after payment confirmation.", true);
         } finally {
             downloadVersion2Btn.disabled = false;
+        }
+    });
+}
+
+if (applyCouponBtn && discountCouponInput && couponStatusMessage) {
+    applyCouponBtn.addEventListener("click", async () => {
+        const code = discountCouponInput.value.trim();
+        if (!code) {
+            couponStatusMessage.textContent = "Please enter a coupon code.";
+            couponStatusMessage.className = "coupon-status error";
+            appliedCouponCode = "";
+            return;
+        }
+
+        applyCouponBtn.disabled = true;
+        applyCouponBtn.textContent = "Validating...";
+        couponStatusMessage.textContent = "";
+
+        try {
+            const response = await fetch(apiUrl("/api/coupon/validate"), {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code }),
+            });
+            const data = await response.json();
+
+            if (data.valid) {
+                couponStatusMessage.textContent = data.message || "Coupon applied!";
+                couponStatusMessage.className = "coupon-status success";
+                appliedCouponCode = data.code;
+            } else {
+                couponStatusMessage.textContent = data.error || "Invalid coupon.";
+                couponStatusMessage.className = "coupon-status error";
+                appliedCouponCode = "";
+            }
+        } catch (error) {
+            couponStatusMessage.textContent = "Error validating coupon. Try again.";
+            couponStatusMessage.className = "coupon-status error";
+            appliedCouponCode = "";
+        } finally {
+            applyCouponBtn.disabled = false;
+            applyCouponBtn.textContent = "Apply";
         }
     });
 }

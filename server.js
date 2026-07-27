@@ -26,6 +26,14 @@ const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID || "";
 const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET || "";
 const PAYPAL_ENV = String(process.env.PAYPAL_ENV || "sandbox").toLowerCase() === "live" ? "live" : "sandbox";
+
+// Discount Coupons Configuration
+// Define coupons here. Type can be "percent" (percentage discount) or "fixed" (fixed amount discount in GBP).
+const VALID_COUPONS = {
+    "VINI10": { type: "percent", value: 10 },
+    "MEMORY5": { type: "fixed", value: 5.00 }
+};
+
 const LEGACY_PAYPAL_PRICE_GBP = Number(process.env.PAYPAL_PRICE_GBP || (isPromo ? 9.90 : 14.99));
 const LEGACY_PAYPAL_CURRENCY = process.env.PAYPAL_CURRENCY || "GBP";
 const LEGACY_PAYPAL_TITLE = process.env.PAYPAL_TITLE || "Memory Tune personalised song";
@@ -2038,6 +2046,32 @@ app.post("/api/payment/create", async (req, res) => {
     }
 });
 
+// Validate Coupon Endpoint
+app.post("/api/coupon/validate", (req, res) => {
+    try {
+        const { code } = req.body;
+        if (!code || typeof code !== "string") {
+            return res.status(400).json({ valid: false, error: "Please enter a valid coupon code." });
+        }
+        const upperCode = code.trim().toUpperCase();
+        const coupon = VALID_COUPONS[upperCode];
+        
+        if (coupon) {
+            return res.json({ 
+                valid: true, 
+                code: upperCode, 
+                type: coupon.type, 
+                value: coupon.value,
+                message: "Coupon applied successfully!"
+            });
+        } else {
+            return res.status(404).json({ valid: false, error: "Invalid or expired coupon." });
+        }
+    } catch (error) {
+        return res.status(500).json({ valid: false, error: "Error validating coupon." });
+    }
+});
+
 app.post("/api/payment/stripe/create", async (req, res) => {
     try {
         if (!STRIPE_SECRET_KEY) {
@@ -2054,6 +2088,7 @@ app.post("/api/payment/stripe/create", async (req, res) => {
             customer_phone: customerPhone,
             customer_email: customerEmail,
             traffic_source: trafficSource,
+            coupon_code: couponCode,
         } = req.body || {};
 
         if (!sessionId) {
@@ -2074,10 +2109,27 @@ app.post("/api/payment/stripe/create", async (req, res) => {
             trafficSource: normalizeTrafficSource(trafficSource),
         });
 
+        // Apply discount if a valid coupon was provided
+        let finalPrice = getCheckoutPriceGbp();
+        if (couponCode && typeof couponCode === "string") {
+            const upperCode = couponCode.trim().toUpperCase();
+            const coupon = VALID_COUPONS[upperCode];
+            if (coupon) {
+                if (coupon.type === "percent") {
+                    finalPrice = finalPrice - (finalPrice * (coupon.value / 100));
+                } else if (coupon.type === "fixed") {
+                    finalPrice = finalPrice - coupon.value;
+                }
+                // Ensure price doesn't go below £0.50 (minimum for Stripe in GBP usually)
+                if (finalPrice < 0.50) finalPrice = 0.50;
+            }
+        }
+
         const baseUrl = getBaseUrl(req);
         const stripe = getStripeClient();
         const checkoutSession = await stripe.checkout.sessions.create({
             mode: "payment",
+            payment_method_types: ["card", "link", "apple_pay", "google_pay"],
             success_url: `${baseUrl}/my-songs?session_id=${encodeURIComponent(sessionId)}&stripe_session_id={CHECKOUT_SESSION_ID}&payment=stripe_success`,
             cancel_url: `${baseUrl}/my-songs?session_id=${encodeURIComponent(sessionId)}&payment=stripe_cancel`,
             billing_address_collection: "auto",
@@ -2087,7 +2139,7 @@ app.post("/api/payment/stripe/create", async (req, res) => {
                     quantity: 1,
                     price_data: {
                         currency: STRIPE_CURRENCY,
-                        unit_amount: Math.round(getCheckoutPriceGbp() * 100),
+                        unit_amount: Math.round(finalPrice * 100),
                         product_data: {
                             name: CHECKOUT_TITLE,
                             description: "Personalised Memory Tune song checkout",
