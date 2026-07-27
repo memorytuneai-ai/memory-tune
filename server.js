@@ -1333,6 +1333,87 @@ function buildMusicReadyEmailHtml(session, baseUrl) {
     `;
 }
 
+function buildVideoReadyEmailHtml(session, baseUrl) {
+    const clientName = escapeHtml(session.clientName || "Customer");
+    const libraryUrl = `${baseUrl}/minhas-musicas.html?session_id=${encodeURIComponent(session.sessionId || "")}`;
+
+    const videoLinks = [];
+    if (session.videoUrl1) {
+        const proxyUrl = `${baseUrl}/api/music/download?url=${encodeURIComponent(session.videoUrl1)}&filename=memorytune-video-1.mp4`;
+        videoLinks.push(`🎬 <strong>Video 1:</strong> <a href="${escapeHtml(proxyUrl)}" style="color:#22c55e;font-weight:bold;text-decoration:none;">Download Video 1</a>`);
+    }
+    if (session.videoUrl2) {
+        const proxyUrl = `${baseUrl}/api/music/download?url=${encodeURIComponent(session.videoUrl2)}&filename=memorytune-video-2.mp4`;
+        videoLinks.push(`🎬 <strong>Video 2:</strong> <a href="${escapeHtml(proxyUrl)}" style="color:#22c55e;font-weight:bold;text-decoration:none;">Download Video 2</a>`);
+    }
+
+    return `
+        <div style="font-family:Arial,Helvetica,sans-serif;background:#0d0d0d;color:#f5ead1;padding:32px 20px;">
+            <div style="max-width:620px;margin:0 auto;background:#171717;border:1px solid #166534;border-radius:20px;padding:32px;">
+                <p style="margin:0 0 16px;font-size:16px;color:#f5ead1;">Hello, ${clientName}.</p>
+                <h1 style="margin:0 0 16px;font-size:26px;line-height:1.3;color:#fff5dc;">🎬 Your Memory Tune video${videoLinks.length > 1 ? "s are" : " is"} ready!</h1>
+                <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#eadfbf;">Your personalised music video${videoLinks.length > 1 ? "s have" : " has"} just finished generating. Download and share them with your loved ones!</p>
+
+                <div style="background:#f0fdf4;padding:24px;border-radius:12px;color:#14532d;margin:0 0 24px;">
+                    <h3 style="margin:0 0 16px;font-size:18px;color:#14532d;">Download your videos</h3>
+                    ${videoLinks.map(l => `<p style="margin:0 0 12px;font-size:15px;">${l}</p>`).join("")}
+                    <p style="margin:16px 0 0;font-size:13px;color:#166534;">⚠️ Video links are available for <strong>14 days</strong>. Download them soon!</p>
+                </div>
+
+                <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#eadfbf;">You can also access your full music library here:</p>
+                <p style="margin:0 0 32px;">🔗 <strong><a href="${escapeHtml(libraryUrl)}" style="color:#ffd54d;text-decoration:none;">Open My Songs</a></strong></p>
+
+                <p style="margin:0;font-size:15px;line-height:1.6;color:#eadfbf;">Thank you for choosing <strong>Memory Tune</strong>. We hope you love it! 💙</p>
+            </div>
+        </div>
+    `;
+}
+
+async function sendVideoReadyEmail(session, baseUrl) {
+    if (!RESEND_API_KEY || !RESEND_FROM_EMAIL) return { skipped: true, reason: "email_disabled" };
+    if (!isValidEmailAddress(session.customerEmail)) return { skipped: true, reason: "invalid_email" };
+
+    const to = normalizeEmailAddress(session.customerEmail);
+    const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${RESEND_API_KEY}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            from: RESEND_FROM_EMAIL,
+            to: [to],
+            reply_to: RESEND_REPLY_TO_EMAIL || undefined,
+            subject: "🎬 Your Memory Tune video is ready to download!",
+            html: buildVideoReadyEmailHtml(session, baseUrl),
+        }),
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text().catch(() => "");
+        throw new Error(errorText || "Failed to send video email via Resend.");
+    }
+    return response.json().catch(() => ({}));
+}
+
+async function sendVideoReadyEmailIfEligible(sessionId, baseUrl) {
+    if (!sessionId) return;
+    const session = getPaidMusicSession(sessionId);
+    if (!session) return;
+    // Only send if at least one video is done
+    if (!session.videoUrl1 && !session.videoUrl2) return;
+    // Don't send if already sent
+    if (session.videoEmailSentAt) return;
+
+    try {
+        await sendVideoReadyEmail(session, baseUrl);
+        upsertPaidMusicSession(sessionId, { videoEmailSentAt: new Date().toISOString() });
+        console.log(`[Video Email] Sent to ${session.customerEmail} for session ${sessionId}`);
+    } catch (err) {
+        console.error("[Video Email Error]", err.message);
+    }
+}
+
 async function sendMusicReadyEmail(session, baseUrl) {
     const to = normalizeEmailAddress(session.customerEmail);
     const response = await fetch("https://api.resend.com/emails", {
@@ -1690,6 +1771,9 @@ app.post("/api/kie/suno/video-callback", (req, res) => {
                     session.videoUrl1 = videoUrl;
                     paidMusicSessions.set(sessionId, session);
                     persistPaidMusicSessions();
+                    // Send email notification (async, don't block response)
+                    const baseUrl = req.protocol + "://" + req.get("host");
+                    sendVideoReadyEmailIfEligible(sessionId, baseUrl).catch(console.error);
                 }
                 break;
             } else if (session.videoTaskId2 === videoTaskId) {
@@ -1697,6 +1781,9 @@ app.post("/api/kie/suno/video-callback", (req, res) => {
                     session.videoUrl2 = videoUrl;
                     paidMusicSessions.set(sessionId, session);
                     persistPaidMusicSessions();
+                    // Send email notification (async, don't block response)
+                    const baseUrl = req.protocol + "://" + req.get("host");
+                    sendVideoReadyEmailIfEligible(sessionId, baseUrl).catch(console.error);
                 }
                 break;
             }
