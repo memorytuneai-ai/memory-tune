@@ -2365,6 +2365,7 @@ if (applyCouponBtn && discountCouponInput && couponStatusMessage) {
                 couponStatusMessage.textContent = data.message || "Coupon applied!";
                 couponStatusMessage.className = "coupon-status success";
                 appliedCouponCode = data.code;
+                applyCheckoutCouponUI(data);
             } else {
                 couponStatusMessage.textContent = data.error || "Invalid coupon.";
                 couponStatusMessage.className = "coupon-status error";
@@ -2379,4 +2380,84 @@ if (applyCouponBtn && discountCouponInput && couponStatusMessage) {
             applyCouponBtn.textContent = "Apply";
         }
     });
+}
+
+// --- Checkout coupon (inside result/payment area) ---
+const checkoutCouponInput = document.getElementById("checkoutCouponInput");
+const checkoutApplyCouponBtn = document.getElementById("checkoutApplyCouponBtn");
+const checkoutCouponStatus = document.getElementById("checkoutCouponStatus");
+const checkoutFinalPrice = document.getElementById("checkoutFinalPrice");
+const checkoutCouponTag = document.getElementById("checkoutCouponTag");
+const checkoutCouponTagText = document.getElementById("checkoutCouponTagText");
+const checkoutRemoveCouponBtn = document.getElementById("checkoutRemoveCouponBtn");
+
+function applyCheckoutCouponUI(data) {
+    if (!checkoutFinalPrice) return;
+    const base = CHECKOUT_VALUE; // e.g. 9.90
+    let finalVal = base;
+    if (data.type === "percent") {
+        finalVal = base - (base * (data.value / 100));
+    } else if (data.type === "fixed") {
+        finalVal = Math.max(0, base - data.value);
+    }
+    finalVal = Math.max(0, finalVal);
+    checkoutFinalPrice.textContent = finalVal === 0 ? "FREE" : `£${finalVal.toFixed(2)}`;
+    // Show coupon tag
+    if (checkoutCouponTag && checkoutCouponTagText) {
+        checkoutCouponTagText.textContent = `${data.code} – ${data.value}${data.type === "percent" ? "% off" : "£ off"}`;
+        checkoutCouponTag.hidden = false;
+    }
+    // Sync to the top-of-page coupon field too
+    if (discountCouponInput) discountCouponInput.value = data.code;
+    appliedCouponCode = data.code;
+}
+
+function resetCheckoutCouponUI() {
+    if (checkoutFinalPrice) checkoutFinalPrice.textContent = CHECKOUT_PRICE_TEXT;
+    if (checkoutCouponTag) checkoutCouponTag.hidden = true;
+    if (checkoutCouponStatus) { checkoutCouponStatus.textContent = ""; checkoutCouponStatus.className = "coupon-status"; }
+    if (checkoutCouponInput) checkoutCouponInput.value = "";
+    appliedCouponCode = "";
+}
+
+if (checkoutApplyCouponBtn && checkoutCouponInput) {
+    checkoutApplyCouponBtn.addEventListener("click", async () => {
+        const code = checkoutCouponInput.value.trim();
+        if (!code) {
+            if (checkoutCouponStatus) { checkoutCouponStatus.textContent = "Please enter a code."; checkoutCouponStatus.className = "coupon-status error"; }
+            return;
+        }
+        checkoutApplyCouponBtn.disabled = true;
+        checkoutApplyCouponBtn.textContent = "Validating...";
+        if (checkoutCouponStatus) checkoutCouponStatus.textContent = "";
+        try {
+            const response = await fetch(apiUrl("/api/coupon/validate"), {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code }),
+            });
+            const data = await response.json();
+            if (data.valid) {
+                if (checkoutCouponStatus) { checkoutCouponStatus.textContent = data.message || "Coupon applied!"; checkoutCouponStatus.className = "coupon-status success"; }
+                applyCheckoutCouponUI(data);
+            } else {
+                if (checkoutCouponStatus) { checkoutCouponStatus.textContent = data.error || "Invalid coupon."; checkoutCouponStatus.className = "coupon-status error"; }
+                appliedCouponCode = "";
+            }
+        } catch {
+            if (checkoutCouponStatus) { checkoutCouponStatus.textContent = "Error. Try again."; checkoutCouponStatus.className = "coupon-status error"; }
+        } finally {
+            checkoutApplyCouponBtn.disabled = false;
+            checkoutApplyCouponBtn.textContent = "Apply";
+        }
+    });
+
+    // Also allow Enter key
+    checkoutCouponInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") checkoutApplyCouponBtn.click();
+    });
+}
+
+if (checkoutRemoveCouponBtn) {
+    checkoutRemoveCouponBtn.addEventListener("click", resetCheckoutCouponUI);
 }

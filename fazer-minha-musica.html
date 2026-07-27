@@ -422,9 +422,20 @@
                                     <span class="final-price-label">Full song price</span>
                                     <div class="price-display">
                                         <span class="old-price">£14.99</span>
-                                        <strong>£9.90</strong>
+                                        <strong id="checkoutFinalPrice">£9.90</strong>
+                                    </div>
+                                    <div id="checkoutCouponTag" class="checkout-coupon-tag" hidden>
+                                        <span id="checkoutCouponTagText"></span>
+                                        <button type="button" id="checkoutRemoveCouponBtn" aria-label="Remove coupon">✕</button>
                                     </div>
                                     <small>Unlock the completed version when you are ready to continue.</small>
+                                </div>
+                                <div class="checkout-coupon-section">
+                                    <div class="coupon-input-group">
+                                        <input type="text" id="checkoutCouponInput" placeholder="Discount coupon" class="coupon-input" autocomplete="off">
+                                        <button type="button" id="checkoutApplyCouponBtn" class="btn btn-secondary">Apply</button>
+                                    </div>
+                                    <p id="checkoutCouponStatus" class="coupon-status"></p>
                                 </div>
                                 <div id="musicPreviews" class="music-previews" hidden>
                                     <div class="preview-unlock-note">
