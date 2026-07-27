@@ -1918,6 +1918,8 @@ app.post("/api/music-session/save", (req, res) => {
             badge,
             download_url_1: downloadUrl1,
             download_url_2: downloadUrl2,
+            conversion_id_1: conversionId1,
+            conversion_id_2: conversionId2,
             preview_locked: previewLocked,
             traffic_source: trafficSource,
         } = req.body || {};
@@ -1940,6 +1942,8 @@ app.post("/api/music-session/save", (req, res) => {
             badge: badge || "Song ready",
             downloadUrl1,
             downloadUrl2,
+            conversionId1: conversionId1 || "",
+            conversionId2: conversionId2 || "",
             previewLocked: Boolean(previewLocked),
             trafficSource: normalizeTrafficSource(trafficSource),
         });

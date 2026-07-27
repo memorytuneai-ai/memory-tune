@@ -1704,6 +1704,8 @@ if (generateMusicBtn) {
                 badge: resultBadge?.textContent || "Song ready",
                 download_url_1: conv1.audio_url,
                 download_url_2: conv2.audio_url,
+                conversion_id_1: task.conversion_id_1 || "",
+                conversion_id_2: task.conversion_id_2 || "",
                 preview_locked: !previewPlaybackUnlocked,
             });
             upsertLocalLibraryItem(buildLocalLibraryItem({
