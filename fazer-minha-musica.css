@@ -3846,3 +3846,19 @@ body.memory-body .hero-logo-art {
 .promo-countdown i {
     font-size: 1.1em;
 }
+
+.btn-video {
+    position: relative;
+    overflow: hidden;
+}
+.btn-video.is-waiting {
+    opacity: 0.8;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.05), transparent);
+    background-size: 200% 100%;
+    animation: loadingGradient 2s infinite linear;
+}
+@keyframes loadingGradient {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+}

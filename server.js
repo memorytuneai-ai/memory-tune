@@ -768,6 +768,10 @@ function serializeMusicSession(session, sessionId) {
         preview_url_2: audioUrl2,
         download_url_1: isPaid ? audioUrl1 : "",
         download_url_2: isPaid ? audioUrl2 : "",
+        video_url_1: session.videoUrl1 || "",
+        video_url_2: session.videoUrl2 || "",
+        video_task_id_1: session.videoTaskId1 || "",
+        video_task_id_2: session.videoTaskId2 || "",
         preview_locked: previewLocked,
         paid: isPaid,
         created_at: session.createdAt,
@@ -1664,6 +1668,119 @@ app.get("/api/music/status", async (req, res) => {
 
 app.post("/api/kie/suno/callback", (req, res) => {
     return res.status(200).json({ ok: true });
+});
+
+app.post("/api/music/create-video", async (req, res) => {
+    try {
+        if (!KIE_SUNO_API_KEY) {
+            return res.status(400).json({ error: "API Key not configured." });
+        }
+        const { sessionId, version } = req.body;
+        if (!sessionId || !version) {
+            return res.status(400).json({ error: "sessionId and version are required." });
+        }
+        const session = getPaidMusicSession(sessionId);
+        if (!session || !session.paid) {
+            return res.status(403).json({ error: "Only unlocked/paid songs can generate music videos." });
+        }
+
+        const variantId = version === 1 ? session.variantId1 : session.variantId2;
+        if (!variantId) {
+            return res.status(400).json({ error: "No generated song found for this version." });
+        }
+        
+        const { taskId, index } = parseSunoVariantId(variantId);
+        
+        // Fetch the track info from Kie to get the specific audioId
+        const statusResponse = await fetch("https://api.kie.ai/api/v1/generate/record-info?taskId=" + encodeURIComponent(taskId), {
+            method: "GET",
+            headers: {
+                Authorization: "Bearer " + KIE_SUNO_API_KEY,
+                "Content-Type": "application/json",
+            },
+        });
+        const statusData = await statusResponse.json();
+        const taskPayload = statusData?.data || statusData;
+        const tracks = extractSunoTracks(taskPayload);
+        const track = tracks[index] || tracks[0];
+        
+        if (!track || !track.id) {
+            return res.status(404).json({ error: "Could not find the audio track to generate the video." });
+        }
+        
+        // Now call the mp4 generate API
+        const videoResponse = await fetch("https://api.kie.ai/api/v1/mp4/generate", {
+            method: "POST",
+            headers: {
+                Authorization: "Bearer " + KIE_SUNO_API_KEY,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                taskId: taskId,
+                audioId: track.id,
+                callBackUrl: getBaseUrl(req) + "/api/kie/suno/video-callback",
+                author: "Memory Tune",
+                domainName: "memorytune.co.uk"
+            })
+        });
+        
+        const videoData = await videoResponse.json();
+        
+        if (!videoResponse.ok || videoData?.code !== 200) {
+            return res.status(videoResponse.status).json({ error: videoData?.msg || videoData?.message || "Failed to start video generation." });
+        }
+        
+        const videoTaskId = videoData?.data?.task_id || videoData?.task_id;
+        
+        if (version === 1) {
+            upsertPaidMusicSession(sessionId, { videoTaskId1: videoTaskId });
+        } else {
+            upsertPaidMusicSession(sessionId, { videoTaskId2: videoTaskId });
+        }
+        
+        return res.json({ success: true, videoTaskId });
+        
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
+});
+
+app.get("/api/music/video-status", async (req, res) => {
+    try {
+        const { videoTaskId, sessionId, version } = req.query;
+        if (!videoTaskId || !sessionId || !version) {
+            return res.status(400).json({ error: "videoTaskId, sessionId, and version are required." });
+        }
+        
+        const response = await fetch("https://api.kie.ai/api/v1/mp4/record-info?taskId=" + encodeURIComponent(videoTaskId), {
+            method: "GET",
+            headers: {
+                Authorization: "Bearer " + KIE_SUNO_API_KEY,
+                "Content-Type": "application/json",
+            },
+        });
+        
+        const data = await response.json();
+        const payload = data?.data || data;
+        const status = (payload?.status || "").toUpperCase();
+        
+        if (status === "SUCCESS" && payload?.video_url) {
+            const v = Number(version);
+            if (v === 1) {
+                upsertPaidMusicSession(sessionId, { videoUrl1: payload.video_url });
+            } else if (v === 2) {
+                upsertPaidMusicSession(sessionId, { videoUrl2: payload.video_url });
+            }
+            return res.json({ status: "SUCCESS", videoUrl: payload.video_url });
+        } else if (status === "CREATE_TASK_FAILED" || status === "GENERATE_MP4_FAILED") {
+            return res.json({ status: "FAILED", error: payload?.msg || "Video generation failed." });
+        } else {
+            return res.json({ status: "PENDING" });
+        }
+        
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
 });
 
 function markPaid(sessionId, payload = {}) {

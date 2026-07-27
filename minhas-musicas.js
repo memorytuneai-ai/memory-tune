@@ -727,10 +727,22 @@ function renderLibraryItem(item) {
     const paymentButton = item.paid
         ? ""
         : `${stripeCheckoutEnabled ? `<button type="button" class="btn btn-primary" data-action="primary">Complete payment</button>` : ""}`;
+    const getVideoButton = (version, videoUrl, videoTaskId) => {
+        if (videoUrl) {
+            return `<button type="button" class="btn btn-outline btn-video" data-action="download-video-${version}" data-url="${videoUrl}">Download Video ${version}</button>`;
+        }
+        if (videoTaskId) {
+            return `<button type="button" class="btn btn-outline btn-video" data-action="status-video-${version}" data-task="${videoTaskId}" disabled>Generating Video ${version}...</button>`;
+        }
+        return `<button type="button" class="btn btn-outline btn-video" data-action="generate-video-${version}">Generate Video ${version}</button>`;
+    };
+
     const paidDownloadButtons = item.paid
         ? `
                 <button type="button" class="btn btn-outline" data-action="download-1">Download version 1</button>
                 <button type="button" class="btn btn-outline" data-action="download-2">Download version 2</button>
+                ${getVideoButton(1, item.video_url_1, item.video_task_id_1)}
+                ${getVideoButton(2, item.video_url_2, item.video_task_id_2)}
           `
         : "";
 
@@ -830,8 +842,85 @@ function bindLibraryActions() {
                 download2Btn.disabled = false;
             }
         });
+
+        const setupVideoActions = (version) => {
+            const genBtn = card.querySelector(`[data-action="generate-video-${version}"]`);
+            const dlBtn = card.querySelector(`[data-action="download-video-${version}"]`);
+            const statusBtn = card.querySelector(`[data-action="status-video-${version}"]`);
+
+            if (genBtn) {
+                genBtn.addEventListener("click", async () => {
+                    genBtn.disabled = true;
+                    genBtn.textContent = "Requesting Video...";
+                    try {
+                        const response = await fetch(apiUrl("/api/music/create-video"), {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ sessionId, version })
+                        });
+                        const data = await response.json();
+                        if (!response.ok) throw new Error(data.error || "Failed to generate video");
+                        
+                        genBtn.textContent = `Generating Video ${version}...`;
+                        genBtn.classList.add("is-waiting");
+                        
+                        pollVideoStatus(sessionId, version, data.videoTaskId, genBtn);
+                    } catch (err) {
+                        setLibraryStatus(err.message, true);
+                        genBtn.disabled = false;
+                        genBtn.textContent = `Generate Video ${version}`;
+                    }
+                });
+            }
+
+            if (dlBtn) {
+                dlBtn.addEventListener("click", () => {
+                    triggerDownload(dlBtn.dataset.url);
+                });
+            }
+
+            if (statusBtn) {
+                pollVideoStatus(sessionId, version, statusBtn.dataset.task, statusBtn);
+            }
+        };
+
+        setupVideoActions(1);
+        setupVideoActions(2);
     });
 }
+
+async function pollVideoStatus(sessionId, version, videoTaskId, btnElement) {
+    if (!videoTaskId) return;
+    try {
+        const response = await fetch(apiUrl(`/api/music/video-status?videoTaskId=${encodeURIComponent(videoTaskId)}&sessionId=${encodeURIComponent(sessionId)}&version=${version}`));
+        const data = await response.json();
+
+        if (data.status === "SUCCESS" && data.videoUrl) {
+            btnElement.textContent = `Download Video ${version}`;
+            btnElement.classList.remove("is-waiting");
+            btnElement.disabled = false;
+            // Overwrite click event to trigger download
+            btnElement.replaceWith(btnElement.cloneNode(true));
+            const newBtn = document.querySelector(`[data-action="status-video-${version}"], [data-action="generate-video-${version}"]`);
+            if (newBtn) {
+                newBtn.dataset.action = `download-video-${version}`;
+                newBtn.dataset.url = data.videoUrl;
+                newBtn.addEventListener("click", () => triggerDownload(data.videoUrl));
+            }
+            return;
+        } else if (data.status === "FAILED") {
+            btnElement.textContent = `Video ${version} Failed`;
+            btnElement.classList.remove("is-waiting");
+            setLibraryStatus(data.error || "Video generation failed.", true);
+            return;
+        }
+        
+        // Still pending, poll again in 10 seconds
+        setTimeout(() => pollVideoStatus(sessionId, version, videoTaskId, btnElement), 10000);
+    } catch (err) {
+        console.error("Polling error:", err);
+        setTimeout(() => pollVideoStatus(sessionId, version, videoTaskId, btnElement), 10000);
+    }
 
 let currentLibraryItems = [];
 
