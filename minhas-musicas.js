@@ -921,6 +921,7 @@ async function pollVideoStatus(sessionId, version, videoTaskId, btnElement) {
         console.error("Polling error:", err);
         setTimeout(() => pollVideoStatus(sessionId, version, videoTaskId, btnElement), 10000);
     }
+}
 
 let currentLibraryItems = [];
 
