@@ -670,7 +670,7 @@ a {
 }
 
 .coupon-status.success {
-    color: #4caf50; /* Green */
+    color: #111111; /* Black */
 }
 
 .coupon-status.error {
