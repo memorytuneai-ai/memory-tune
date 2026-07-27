@@ -1684,7 +1684,10 @@ app.post("/api/music/create-video", async (req, res) => {
             return res.status(403).json({ error: "Only unlocked/paid songs can generate music videos." });
         }
 
-        const variantId = version === 1 ? session.variantId1 : session.variantId2;
+        const variantId = version === 1 
+            ? (session.conversion_id_1 || session.conversionId1) 
+            : (session.conversion_id_2 || session.conversionId2);
+            
         if (!variantId) {
             return res.status(400).json({ error: "No generated song found for this version." });
         }
@@ -1699,7 +1702,14 @@ app.post("/api/music/create-video", async (req, res) => {
                 "Content-Type": "application/json",
             },
         });
-        const statusData = await statusResponse.json();
+        
+        let statusData;
+        try {
+            statusData = await statusResponse.json();
+        } catch (e) {
+            return res.status(502).json({ error: "Failed to parse response from Kie AI while fetching track info." });
+        }
+        
         const taskPayload = statusData?.data || statusData;
         const tracks = extractSunoTracks(taskPayload);
         const track = tracks[index] || tracks[0];
@@ -1724,7 +1734,12 @@ app.post("/api/music/create-video", async (req, res) => {
             })
         });
         
-        const videoData = await videoResponse.json();
+        let videoData;
+        try {
+            videoData = await videoResponse.json();
+        } catch (e) {
+            return res.status(502).json({ error: "Failed to parse response from Kie AI while generating video." });
+        }
         
         if (!videoResponse.ok || videoData?.code !== 200) {
             return res.status(videoResponse.status).json({ error: videoData?.msg || videoData?.message || "Failed to start video generation." });
@@ -1760,7 +1775,13 @@ app.get("/api/music/video-status", async (req, res) => {
             },
         });
         
-        const data = await response.json();
+        let data;
+        try {
+            data = await response.json();
+        } catch (e) {
+            return res.status(502).json({ error: "Failed to parse response from Kie AI while checking video status." });
+        }
+        
         const payload = data?.data || data;
         const status = (payload?.status || "").toUpperCase();
         
