@@ -738,7 +738,7 @@ function renderLibraryItem(item) {
         : `${stripeCheckoutEnabled ? `<button type="button" class="btn btn-primary" data-action="primary">Complete payment</button>` : ""}`;
     const getVideoButton = (version, videoUrl, videoTaskId) => {
         if (videoUrl) {
-            return `<button type="button" class="btn btn-outline btn-video" data-action="download-video-${version}" data-url="${videoUrl}">Download Video ${version}</button>`;
+            return `<button type="button" class="btn btn-outline btn-video is-ready" data-action="download-video-${version}" data-url="${videoUrl}">Download Video ${version}</button>`;
         }
         if (videoTaskId) {
             return `<button type="button" class="btn btn-outline btn-video" data-action="status-video-${version}" data-task="${videoTaskId}" disabled>Generating Video ${version}...</button>`;
@@ -907,6 +907,7 @@ async function pollVideoStatus(sessionId, version, videoTaskId, btnElement) {
         if (data.status === "SUCCESS" && data.videoUrl) {
             btnElement.textContent = `Download Video ${version}`;
             btnElement.classList.remove("is-waiting");
+            btnElement.classList.add("is-ready");
             btnElement.disabled = false;
             // Overwrite click event to trigger download
             btnElement.replaceWith(btnElement.cloneNode(true));
@@ -914,7 +915,8 @@ async function pollVideoStatus(sessionId, version, videoTaskId, btnElement) {
             if (newBtn) {
                 newBtn.dataset.action = `download-video-${version}`;
                 newBtn.dataset.url = data.videoUrl;
-                newBtn.addEventListener("click", () => triggerDownload(data.videoUrl));
+                newBtn.classList.add("is-ready");
+                newBtn.addEventListener("click", () => triggerDownload(data.videoUrl, `memorytune-video-${version}.mp4`));
             }
             return;
         } else if (data.status === "FAILED") {
