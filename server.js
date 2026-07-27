@@ -31,6 +31,7 @@ const PAYPAL_ENV = String(process.env.PAYPAL_ENV || "sandbox").toLowerCase() ===
 // Define coupons here. Type can be "percent" (percentage discount) or "fixed" (fixed amount discount in GBP).
 const VALID_COUPONS = {
     "VINI10": { type: "percent", value: 10 },
+    "VINI100": { type: "percent", value: 100 },
     "MEMORY5": { type: "fixed", value: 5.00 }
 };
 
@@ -2120,12 +2121,27 @@ app.post("/api/payment/stripe/create", async (req, res) => {
                 } else if (coupon.type === "fixed") {
                     finalPrice = finalPrice - coupon.value;
                 }
-                // Ensure price doesn't go below £0.50 (minimum for Stripe in GBP usually)
-                if (finalPrice < 0.50) finalPrice = 0.50;
+                if (finalPrice < 0) finalPrice = 0;
             }
         }
 
         const baseUrl = getBaseUrl(req);
+
+        // 100% FREE BYPASS
+        if (finalPrice === 0) {
+            markPaid(sessionId, { paymentId: `coupon_${couponCode}`, status: "COMPLETED" });
+            upsertTempMusicSession(sessionId, {
+                stripeCheckoutSessionId: `free_${Date.now()}`,
+                stripeCheckoutStatus: "complete",
+                stripePaymentStatus: "paid",
+            });
+            serializeOrderReport(sessionId, req);
+            return res.json({ checkout_url: `${baseUrl}/my-songs?session_id=${encodeURIComponent(sessionId)}&stripe_session_id=free&payment=stripe_success` });
+        }
+
+        // Ensure price doesn't go below £0.30 (minimum for Stripe in GBP)
+        if (finalPrice < 0.30) finalPrice = 0.30;
+
         const stripe = getStripeClient();
         const checkoutSession = await stripe.checkout.sessions.create({
             mode: "payment",
