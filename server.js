@@ -1670,6 +1670,45 @@ app.post("/api/kie/suno/callback", (req, res) => {
     return res.status(200).json({ ok: true });
 });
 
+app.post("/api/kie/suno/video-callback", (req, res) => {
+    try {
+        const payload = req.body;
+        console.log("[Video Callback] Received payload:", JSON.stringify(payload));
+
+        if (!payload || !payload.taskId) {
+            return res.status(400).json({ ok: false, error: "Missing taskId" });
+        }
+
+        const videoTaskId = payload.taskId;
+        const status = (payload.successFlag || payload.status || "").toUpperCase();
+        const videoUrl = payload.response?.videoUrl || payload.response?.video_url || payload.video_url || payload.url;
+
+        // Find which session this belongs to and save the video URL
+        for (const [sessionId, session] of paidMusicSessions.entries()) {
+            if (session.videoTaskId1 === videoTaskId) {
+                if ((status === "SUCCESS" || status === "SUCCESSFUL") && videoUrl) {
+                    session.videoUrl1 = videoUrl;
+                    paidMusicSessions.set(sessionId, session);
+                    persistPaidMusicSessions();
+                }
+                break;
+            } else if (session.videoTaskId2 === videoTaskId) {
+                if ((status === "SUCCESS" || status === "SUCCESSFUL") && videoUrl) {
+                    session.videoUrl2 = videoUrl;
+                    paidMusicSessions.set(sessionId, session);
+                    persistPaidMusicSessions();
+                }
+                break;
+            }
+        }
+
+        return res.status(200).json({ ok: true });
+    } catch (e) {
+        console.error("[Video Callback Error]", e);
+        return res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
 app.post("/api/music/create-video", async (req, res) => {
     try {
         if (!KIE_SUNO_API_KEY) {
@@ -1767,6 +1806,18 @@ app.get("/api/music/video-status", async (req, res) => {
             return res.status(400).json({ error: "videoTaskId, sessionId, and version are required." });
         }
         
+        // Fast path: check if webhook already saved it
+        const session = paidMusicSessions.get(sessionId);
+        if (session) {
+            const v = Number(version);
+            if (v === 1 && session.videoUrl1) {
+                return res.json({ status: "SUCCESS", videoUrl: session.videoUrl1 });
+            }
+            if (v === 2 && session.videoUrl2) {
+                return res.json({ status: "SUCCESS", videoUrl: session.videoUrl2 });
+            }
+        }
+
         const response = await fetch("https://api.kie.ai/api/v1/mp4/record-info?taskId=" + encodeURIComponent(videoTaskId), {
             method: "GET",
             headers: {
