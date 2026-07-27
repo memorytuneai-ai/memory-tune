@@ -1783,8 +1783,8 @@ app.get("/api/music/video-status", async (req, res) => {
         }
         
         const payload = data?.data || data;
-        const status = (payload?.status || "").toUpperCase();
-        const finalUrl = payload?.video_url || payload?.videoUrl || payload?.url || payload?.file_url;
+        const status = (payload?.status || payload?.successFlag || "").toUpperCase();
+        const finalUrl = payload?.response?.videoUrl || payload?.response?.video_url || payload?.video_url || payload?.videoUrl || payload?.url || payload?.file_url;
         
         if ((status === "SUCCESS" || status === "SUCCESSFUL") && finalUrl) {
             const v = Number(version);
