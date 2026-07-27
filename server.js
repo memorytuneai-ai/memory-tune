@@ -1784,17 +1784,21 @@ app.get("/api/music/video-status", async (req, res) => {
         
         const payload = data?.data || data;
         const status = (payload?.status || "").toUpperCase();
+        const finalUrl = payload?.video_url || payload?.videoUrl || payload?.url || payload?.file_url;
         
-        if (status === "SUCCESS" && payload?.video_url) {
+        if ((status === "SUCCESS" || status === "SUCCESSFUL") && finalUrl) {
             const v = Number(version);
             if (v === 1) {
-                upsertPaidMusicSession(sessionId, { videoUrl1: payload.video_url });
+                upsertPaidMusicSession(sessionId, { videoUrl1: finalUrl });
             } else if (v === 2) {
-                upsertPaidMusicSession(sessionId, { videoUrl2: payload.video_url });
+                upsertPaidMusicSession(sessionId, { videoUrl2: finalUrl });
             }
-            return res.json({ status: "SUCCESS", videoUrl: payload.video_url });
-        } else if (status === "CREATE_TASK_FAILED" || status === "GENERATE_MP4_FAILED") {
+            return res.json({ status: "SUCCESS", videoUrl: finalUrl });
+        } else if (status === "FAILED" || status === "ERROR" || status === "CREATE_TASK_FAILED" || status === "GENERATE_MP4_FAILED") {
             return res.json({ status: "FAILED", error: payload?.msg || "Video generation failed." });
+        } else if (status === "SUCCESS" || status === "SUCCESSFUL") {
+            // It says SUCCESS but missing url, maybe still processing? Wait for it.
+            return res.json({ status: "PENDING" });
         } else {
             return res.json({ status: "PENDING" });
         }
