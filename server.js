@@ -1784,9 +1784,15 @@ app.post("/api/music/create-video", async (req, res) => {
             return res.status(videoResponse.status).json({ error: videoData?.msg || videoData?.message || "Failed to start video generation." });
         }
         
-        const videoTaskId = videoData?.data?.task_id || videoData?.task_id;
+        const videoTaskId = videoData?.data?.taskId || videoData?.data?.task_id || videoData?.taskId || videoData?.task_id;
         
-        if (version === 1) {
+        if (!videoTaskId) {
+            console.error("[create-video] Kie response missing taskId:", JSON.stringify(videoData));
+            return res.status(502).json({ error: "Kie AI did not return a video task ID. Response: " + JSON.stringify(videoData) });
+        }
+        
+        const v = Number(version);
+        if (v === 1) {
             upsertPaidMusicSession(sessionId, { videoTaskId1: videoTaskId });
         } else {
             upsertPaidMusicSession(sessionId, { videoTaskId2: videoTaskId });
@@ -1796,6 +1802,51 @@ app.post("/api/music/create-video", async (req, res) => {
         
     } catch (error) {
         return res.status(500).json({ error: error.message });
+    }
+});
+
+// Proxy endpoint to force-download cross-origin audio/video files
+app.get("/api/music/download", async (req, res) => {
+    const { url, filename } = req.query;
+    if (!url) return res.status(400).json({ error: "url is required" });
+    
+    // Only allow trusted domains
+    const allowed = ["tempfile.aiquickdraw.com", "musicfile.kie.ai", "cdn1.suno.ai", "cdn2.suno.ai", "cdn.suno.ai"];
+    let hostname;
+    try {
+        hostname = new URL(url).hostname;
+    } catch {
+        return res.status(400).json({ error: "Invalid URL" });
+    }
+    if (!allowed.some(d => hostname === d || hostname.endsWith("." + d))) {
+        return res.status(403).json({ error: "Domain not allowed for download proxy." });
+    }
+    
+    try {
+        const upstream = await fetch(url);
+        if (!upstream.ok) return res.status(502).json({ error: "Failed to fetch file from source." });
+        
+        const contentType = upstream.headers.get("content-type") || "audio/mpeg";
+        const safeFilename = (filename || "memorytune-song").replace(/[^a-zA-Z0-9 ._-]/g, "_");
+        const ext = contentType.includes("mp4") || safeFilename.endsWith(".mp4") ? ".mp4" : ".mp3";
+        
+        res.setHeader("Content-Type", contentType);
+        res.setHeader("Content-Disposition", `attachment; filename="${safeFilename}${safeFilename.endsWith(ext) ? "" : ext}"`);
+        res.setHeader("Cache-Control", "no-cache");
+        if (upstream.headers.get("content-length")) {
+            res.setHeader("Content-Length", upstream.headers.get("content-length"));
+        }
+        
+        const reader = upstream.body.getReader();
+        const pump = async () => {
+            const { done, value } = await reader.read();
+            if (done) { res.end(); return; }
+            res.write(Buffer.from(value));
+            return pump();
+        };
+        await pump();
+    } catch (err) {
+        if (!res.headersSent) res.status(500).json({ error: err.message });
     }
 });
 

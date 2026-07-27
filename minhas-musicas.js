@@ -268,11 +268,20 @@ function formatDate(dateText) {
     }).format(date);
 }
 
-function triggerDownload(url) {
+function buildProxyDownloadUrl(url, filename) {
+    if (!url) return url;
+    // If it's already our own server, use as-is
+    if (url.startsWith("/") || url.includes(window.location.hostname)) return url;
+    const params = new URLSearchParams({ url, filename: filename || "memorytune-song" });
+    return apiUrl("/api/music/download?" + params.toString());
+}
+
+function triggerDownload(url, filename) {
+    const proxyUrl = buildProxyDownloadUrl(url, filename);
     const link = document.createElement("a");
-    link.href = url;
+    link.href = proxyUrl;
     link.rel = "noopener";
-    link.download = "";
+    link.download = filename || "memorytune-song";
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -821,7 +830,7 @@ function bindLibraryActions() {
             download1Btn.disabled = true;
             try {
                 const url = await getApprovedDownloadUrl(sessionId, 1);
-                triggerDownload(url);
+                triggerDownload(url, `memorytune-version-1.mp3`);
             } catch (error) {
                 setLibraryStatus(error.message || "The version 1 download will be released after payment confirmation.", true);
                 await loadLibrary();
@@ -834,7 +843,7 @@ function bindLibraryActions() {
             download2Btn.disabled = true;
             try {
                 const url = await getApprovedDownloadUrl(sessionId, 2);
-                triggerDownload(url);
+                triggerDownload(url, `memorytune-version-2.mp3`);
             } catch (error) {
                 setLibraryStatus(error.message || "The version 2 download will be released after payment confirmation.", true);
                 await loadLibrary();
