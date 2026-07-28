@@ -1480,7 +1480,7 @@ function waitForAudioReady(audioEl) {
 }
 
 const lyricStatusSteps = [
-    "Organizando suas ideias...",
+    "Organizing your ideas...",
     "Writing the opening lines...",
     "Shaping the chorus...",
     "Refining the composition..."

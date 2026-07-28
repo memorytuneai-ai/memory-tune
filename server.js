@@ -1570,9 +1570,6 @@ app.post("/api/generate-lyrics", async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`Memory Tune running at http://localhost:${PORT}`);
-});
 
 
 
@@ -2738,4 +2735,8 @@ app.get("/api/payment/status", async (req, res) => {
         stripe_checkout_status: session?.stripeCheckoutStatus || null,
         stripe_payment_status: session?.stripePaymentStatus || null,
     });
+});
+
+app.listen(PORT, () => {
+    console.log(`Memory Tune running at http://localhost:${PORT}`);
 });
