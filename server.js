@@ -17,7 +17,7 @@ const GLOBAL_BASE_URL = process.env.BASE_URL || "https://memorytune.co.uk";
 const KIE_SUNO_MODEL = process.env.KIE_SUNO_MODEL || "V4_5";
 const KIE_SUNO_CALLBACK_URL = process.env.KIE_SUNO_CALLBACK_URL || "";
 const KIE_SUNO_NEGATIVE_TAGS = process.env.KIE_SUNO_NEGATIVE_TAGS || "";
-const PROMO_END = new Date("2026-07-20T02:59:59Z").getTime();
+const PROMO_END = new Date("2026-08-01T02:59:59Z").getTime();
 const isPromo = Date.now() < PROMO_END;
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "";
