@@ -31,9 +31,10 @@ const PAYPAL_ENV = String(process.env.PAYPAL_ENV || "sandbox").toLowerCase() ===
 // Define coupons here. Type can be "percent" (percentage discount) or "fixed" (fixed amount discount in GBP).
 const VALID_COUPONS = {
     "VINI10": { type: "percent", value: 10 },
-    "VINI100": { type: "percent", value: 100 },
-    "MEMORY5": { type: "fixed", value: 5.00 }
+    "MEMORY5": { type: "fixed", value: 5.00 },
+    // Add more coupons here or move to env variable for production
 };
+const ADMIN_SECRET = process.env.ADMIN_SECRET || "";
 
 const LEGACY_PAYPAL_PRICE_GBP = Number(process.env.PAYPAL_PRICE_GBP || (isPromo ? 9.90 : 14.99));
 const LEGACY_PAYPAL_CURRENCY = process.env.PAYPAL_CURRENCY || "GBP";
@@ -157,11 +158,29 @@ app.get("/api/payment/config", (req, res) => {
     });
 });
 
+const DOWNLOAD_PROXY_ALLOWED_DOMAINS = [
+    "cdn1.suno.ai",
+    "cdn2.suno.ai",
+    "audiopipe.suno.com",
+    "storage.googleapis.com",
+    "cdn.kie.ai",
+    "files.kie.ai",
+];
+
 app.get("/api/download", async (req, res) => {
     try {
         const fileUrl = req.query.url;
         if (!fileUrl) {
             return res.status(400).send("URL parameter is missing.");
+        }
+        // SSRF protection: only allow trusted audio CDN domains
+        let parsedUrl;
+        try { parsedUrl = new URL(fileUrl); } catch { return res.status(400).send("Invalid URL."); }
+        const isAllowed = DOWNLOAD_PROXY_ALLOWED_DOMAINS.some(
+            (domain) => parsedUrl.hostname === domain || parsedUrl.hostname.endsWith("." + domain)
+        );
+        if (!isAllowed) {
+            return res.status(403).send("Domain not allowed.");
         }
         const response = await fetch(fileUrl);
         if (!response.ok) {
@@ -169,13 +188,14 @@ app.get("/api/download", async (req, res) => {
         }
         
         const contentType = response.headers.get("content-type") || "audio/mpeg";
-        const urlPath = new URL(fileUrl).pathname;
-        let filename = urlPath.split('/').pop() || "MemoryTune_Song.mp3";
-        if (!filename.includes('.')) {
-            filename += contentType.includes("mp4") || contentType.includes("video") ? ".mp4" : ".mp3";
-        }
+        const urlPath = parsedUrl.pathname;
+        let rawFilename = urlPath.split('/').pop() || "MemoryTune_Song.mp3";
+        // Sanitise filename to prevent header injection
+        const filename = rawFilename.replace(/[\r\n"]/g, "").slice(0, 200) || "MemoryTune_Song.mp3";
+        const safeFilename = filename.includes('.') ? filename
+            : filename + (contentType.includes("mp4") || contentType.includes("video") ? ".mp4" : ".mp3");
         
-        res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+        res.setHeader("Content-Disposition", `attachment; filename="${safeFilename}"`);
         res.setHeader("Content-Type", contentType);
         
         if (response.body) {
@@ -279,7 +299,9 @@ app.post("/api/payment/stripe/webhook", express.raw({ type: "application/json" }
 });
 
 app.use(express.json({ limit: "1mb" }));
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, "public"), { dotfiles: "deny" }));
+// Also serve specific static asset types from root (html served via routes only)
+app.use(express.static(__dirname, { dotfiles: "deny", index: false, extensions: ["css", "js", "jpeg", "jpg", "png", "ico", "svg", "webp", "mp3", "mp4", "woff", "woff2"] }));
 app.set("trust proxy", true);
 
 function getPayPalBaseUrl() {
@@ -1319,7 +1341,7 @@ function buildMusicReadyEmailHtml(session, baseUrl) {
                     <p style="margin:0 0 20px;font-size:14px;line-height:1.5;">Open the link, click the <strong>three dots (⋯)</strong> in the player, and select <strong>Download</strong>.</p>
                     
                     <p style="margin:0 0 6px;font-size:15px;color:#d93025;"><strong>Important:</strong></p>
-                    <p style="margin:0;font-size:14px;line-height:1.5;">Please download and save your songs to your device as soon as possible. Your download links will remain available for <strong>10 days only</strong>. After that period, the files are automatically removed from our servers and can no longer be accessed.</p>
+                    <p style="margin:0;font-size:14px;line-height:1.5;">Please download and save your songs to your device as soon as possible. Your download links will remain available for <strong>15 days only</strong>. After that period, the files are automatically removed from our servers and can no longer be accessed.</p>
                 </div>
 
                 <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#eadfbf;">You can also access your music library here:</p>
@@ -1335,7 +1357,7 @@ function buildMusicReadyEmailHtml(session, baseUrl) {
 
 function buildVideoReadyEmailHtml(session, baseUrl) {
     const clientName = escapeHtml(session.clientName || "Customer");
-    const libraryUrl = `${baseUrl}/minhas-musicas.html?session_id=${encodeURIComponent(session.sessionId || "")}`;
+    const libraryUrl = `${baseUrl}/my-songs?session_id=${encodeURIComponent(session.sessionId || "")}`;  
 
     const videoLinks = [];
     if (session.videoUrl1) {
@@ -2242,7 +2264,19 @@ app.get("/api/music-library", (req, res) => {
     });
 });
 
-app.get("/api/admin/music-archive", (req, res) => {
+function requireAdminAuth(req, res, next) {
+    if (!ADMIN_SECRET) {
+        // If no secret is configured, block access entirely
+        return res.status(403).json({ error: "Admin access is not configured." });
+    }
+    const token = req.headers["authorization"]?.replace("Bearer ", "") || req.query.admin_secret;
+    if (!token || token !== ADMIN_SECRET) {
+        return res.status(401).json({ error: "Unauthorized." });
+    }
+    next();
+}
+
+app.get("/api/admin/music-archive", requireAdminAuth, (req, res) => {
     pruneExpiredPaidMusicSessions();
 
     const query = String(req.query.q || "").trim().toLowerCase();
@@ -2278,21 +2312,21 @@ app.get("/api/admin/music-archive", (req, res) => {
         count: items.length,
     });
 });
-app.get("/api/admin/orders-report", (req, res) => {
+app.get("/api/admin/orders-report", requireAdminAuth, (req, res) => {
     return res.json({
         items: getSortedOrderReports(),
         count: orderReports.size,
     });
 });
 
-app.get("/api/admin/orders-report.csv", (req, res) => {
+app.get("/api/admin/orders-report.csv", requireAdminAuth, (req, res) => {
     const csv = buildOrdersCsv();
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
     res.setHeader("Content-Disposition", "attachment; filename=\"pedidos-musicas.csv\"");
     return res.send(`\uFEFF${csv}`);
 });
 
-app.post("/api/admin/orders-report/sync-sheets", async (req, res) => {
+app.post("/api/admin/orders-report/sync-sheets", requireAdminAuth, async (req, res) => {
     if (!GOOGLE_SHEETS_WEBHOOK_URL) {
         return res.status(400).json({ error: "GOOGLE_SHEETS_WEBHOOK_URL nao configurado." });
     }
@@ -2470,7 +2504,9 @@ app.post("/api/payment/stripe/create", async (req, res) => {
                 stripeCheckoutStatus: "complete",
                 stripePaymentStatus: "paid",
             });
-            serializeOrderReport(sessionId, req);
+            // Correctly save order report using the session data
+            const freeSession = getTempMusicSession(sessionId) || getPaidMusicSession(sessionId);
+            if (freeSession) upsertOrderReportFromSession(freeSession);
             return res.json({ checkout_url: `${baseUrl}/my-songs?session_id=${encodeURIComponent(sessionId)}&stripe_session_id=free&payment=stripe_success` });
         }
 

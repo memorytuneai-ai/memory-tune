@@ -11,6 +11,16 @@ const CURRENT_SESSION_KEY = "ss_current_music_session";
 const PREVIEW_SECONDS = 40;
 let stripeCheckoutEnabled = false;
 
+function escapeHtml(str) {
+    return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+
 function trackPixel(eventName, data) {
     if (typeof window.fbq !== "function") return;
     window.fbq("track", eventName, data || {});
@@ -758,29 +768,29 @@ function renderLibraryItem(item) {
     const audioControlsAttrs = item.paid ? "" : 'controlsList="nodownload noplaybackrate" disablePictureInPicture';
 
     return `
-        <article class="library-card" data-session-id="${item.session_id}">
+        <article class="library-card" data-session-id="${escapeHtml(item.session_id)}">
             <div class="library-card-head">
                 <div>
-                    <span class="result-badge">${item.badge || "Song ready"}</span>
-                    <h3>${item.title || "Your song is ready"}</h3>
-                    <p>${item.subtitle || "We found your temporary session."}</p>
+                    <span class="result-badge">${escapeHtml(item.badge) || "Song ready"}</span>
+                    <h3>${escapeHtml(item.title) || "Your song is ready"}</h3>
+                    <p>${escapeHtml(item.subtitle) || "We found your temporary session."}</p>
                 </div>
                 <span class="library-payment-status ${statusClass}">${statusLabel}</span>
             </div>
             <div class="library-meta">
                 <span><i class="fa-regular fa-calendar"></i> ${formatDate(item.created_at || item.updated_at)}</span>
-                <span><i class="fa-solid fa-music"></i> ${item.occasion || "Special occasion"}</span>
-                <span><i class="fa-solid fa-wave-square"></i> ${item.style || "Style not provided"}</span>
+                <span><i class="fa-solid fa-music"></i> ${escapeHtml(item.occasion) || "Special occasion"}</span>
+                <span><i class="fa-solid fa-wave-square"></i> ${escapeHtml(item.style) || "Style not provided"}</span>
                 <span><i class="fa-solid fa-microphone-lines"></i> Voice ${normalizeVoiceGender(item.voice_gender)}</span>
             </div>
             <div class="library-audios">
                 <div class="library-audio-card">
                     <strong>Preview 1</strong>
-                    <audio controls ${audioControlsAttrs} src="${previewUrl1}"></audio>
+                    <audio controls ${audioControlsAttrs} src="${escapeHtml(previewUrl1)}"></audio>
                 </div>
                 <div class="library-audio-card">
                     <strong>Preview 2</strong>
-                    <audio controls ${audioControlsAttrs} src="${previewUrl2}"></audio>
+                    <audio controls ${audioControlsAttrs} src="${escapeHtml(previewUrl2)}"></audio>
                 </div>
             </div>
             <div class="library-card-actions">
