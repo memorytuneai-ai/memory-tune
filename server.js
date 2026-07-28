@@ -2480,7 +2480,7 @@ app.post("/api/payment/stripe/create", async (req, res) => {
         const stripe = getStripeClient();
         const checkoutSession = await stripe.checkout.sessions.create({
             mode: "payment",
-            payment_method_types: ["card", "link", "apple_pay", "google_pay"],
+            automatic_payment_methods: { enabled: true },
             success_url: `${baseUrl}/my-songs?session_id=${encodeURIComponent(sessionId)}&stripe_session_id={CHECKOUT_SESSION_ID}&payment=stripe_success`,
             cancel_url: `${baseUrl}/my-songs?session_id=${encodeURIComponent(sessionId)}&payment=stripe_cancel`,
             billing_address_collection: "auto",
