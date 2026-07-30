@@ -1042,6 +1042,16 @@ async function loadLibrary() {
     libraryGrid.innerHTML = items.map(renderLibraryItem).join("");
     libraryGrid.hidden = false;
     libraryEmpty.hidden = true;
+
+    const banner = document.getElementById("libraryCouponBanner");
+    const codeDisplay = document.getElementById("libraryCouponCodeDisplay");
+    const couponItem = items.find((i) => i.nextPurchaseCoupon);
+    if (couponItem && banner && codeDisplay) {
+        codeDisplay.textContent = couponItem.nextPurchaseCoupon;
+        banner.hidden = false;
+    } else if (banner) {
+        banner.hidden = true;
+    }
     if (shouldRetryAfterPayment) {
         setLibraryStatus("Your song was found and the library is now updated.");
     } else {

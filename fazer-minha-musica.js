@@ -1896,6 +1896,7 @@ const createPayment = async (extra = {}) => {
             client_name: lastFormValues?.clientName || "",
             customer_phone: getNormalizedPreviewPhone(),
             customer_email: getNormalizedPreviewEmail(),
+            coupon_code: appliedCouponCode || undefined,
             ...extra,
         }),
     });
@@ -2143,6 +2144,12 @@ async function openEmbeddedCheckout(payment, analyticsExtra = {}) {
     const config = await fetchPaymentConfig().catch(() => null);
     if (config?.provider !== "paypal" || !config?.client_id || !payment?.order_id) {
         return false;
+    }
+
+    if (payment.order_id.startsWith("free_")) {
+        setMusicStatus("Redirecionando...");
+        window.location.assign(`/my-songs?session_id=${encodeURIComponent(currentMusicSessionId)}&stripe_session_id=free&payment=stripe_success`);
+        return true;
     }
 
     try {

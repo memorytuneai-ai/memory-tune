@@ -36,11 +36,11 @@ const VALID_COUPONS = {
 };
 const ADMIN_SECRET = process.env.ADMIN_SECRET || "";
 
-const LEGACY_PAYPAL_PRICE_GBP = Number(process.env.PAYPAL_PRICE_GBP || (isPromo ? 9.90 : 14.99));
+const LEGACY_PAYPAL_PRICE_GBP = Number(process.env.PAYPAL_PRICE_GBP || 29.90);
 const LEGACY_PAYPAL_CURRENCY = process.env.PAYPAL_CURRENCY || "GBP";
 const LEGACY_PAYPAL_TITLE = process.env.PAYPAL_TITLE || "Memory Tune personalised song";
 const CHECKOUT_TITLE = process.env.CHECKOUT_TITLE || process.env.STRIPE_TITLE || LEGACY_PAYPAL_TITLE;
-const getCheckoutPriceGbp = () => (Date.now() < PROMO_END) ? 9.90 : 14.99;
+const getCheckoutPriceGbp = () => 29.90;
 const STRIPE_CURRENCY = String(process.env.STRIPE_CURRENCY || "gbp").toLowerCase();
 const PAYPAL_PRICE_GBP = LEGACY_PAYPAL_PRICE_GBP;
 const PAYPAL_CURRENCY = LEGACY_PAYPAL_CURRENCY;
@@ -60,8 +60,10 @@ const TEMP_MUSIC_LIBRARY_FILE = path.join(DATA_DIR, ".tmp-music-library.json");
 const PAID_MUSIC_LIBRARY_FILE = path.join(DATA_DIR, ".paid-music-library.json");
 const PREVIEW_CREDIT_WALLETS_FILE = path.join(DATA_DIR, ".preview-credit-wallets.json");
 const ORDER_REPORT_FILE = path.join(DATA_DIR, ".music-orders-report.json");
+const DYNAMIC_COUPONS_FILE = path.join(DATA_DIR, ".dynamic-coupons.json");
 const TEMP_MUSIC_TTL_MS = 24 * 60 * 60 * 1000;
 const PAID_MUSIC_TTL_MS = 15 * 24 * 60 * 60 * 1000;
+const dynamicCoupons = new Map();
 const INITIAL_PREVIEW_CREDITS = Number(process.env.INITIAL_PREVIEW_CREDITS || 3);
 const PURCHASE_REWARD_CREDITS = Number(process.env.PURCHASE_REWARD_CREDITS || 2);
 let stripeClient = null;
@@ -475,6 +477,41 @@ function persistOrderReports() {
     }
 }
 
+function loadDynamicCoupons() {
+    try {
+        if (!fs.existsSync(DYNAMIC_COUPONS_FILE)) return;
+        const raw = fs.readFileSync(DYNAMIC_COUPONS_FILE, "utf8");
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return;
+
+        parsed.forEach((entry) => {
+            if (!entry?.code) return;
+            dynamicCoupons.set(entry.code, entry);
+        });
+    } catch (error) {
+        console.error("Erro ao carregar cupons dinamicos", error);
+    }
+}
+
+function persistDynamicCoupons() {
+    try {
+        const payload = JSON.stringify(Array.from(dynamicCoupons.values()), null, 2);
+        fs.writeFileSync(DYNAMIC_COUPONS_FILE, payload, "utf8");
+    } catch (error) {
+        console.error("Erro ao salvar cupons dinamicos", error);
+    }
+}
+
+function upsertDynamicCoupon(code, payload = {}) {
+    if (!code) return;
+    const upperCode = String(code).trim().toUpperCase();
+    const current = dynamicCoupons.get(upperCode) || { code: upperCode };
+    const updated = { ...current, ...payload };
+    dynamicCoupons.set(upperCode, updated);
+    persistDynamicCoupons();
+    return updated;
+}
+
 function getOrderAmountBrl(existing = {}, payload = {}) {
     const amount = Number(payload.amountBrl ?? existing.amountBrl ?? getCheckoutPriceGbp());
     return Number.isFinite(amount) && amount > 0 ? amount : getCheckoutPriceGbp();
@@ -807,6 +844,7 @@ function serializeMusicSession(session, sessionId) {
         stripe_payment_status: session.stripePaymentStatus || null,
         credit_rewarded: Boolean(session.creditRewarded),
         is_permanent: false,
+        nextPurchaseCoupon: session.nextPurchaseCoupon || null,
     };
 }
 
@@ -971,6 +1009,7 @@ loadTempMusicSessions();
 loadPaidMusicSessions();
 loadPreviewCreditWallets();
 loadOrderReports();
+loadDynamicCoupons();
 syncOrderReportsFromSessions({ skipSync: true });
 syncAllOrderReportsToGoogleSheets();
 pruneExpiredTempMusicSessions();
@@ -1343,6 +1382,16 @@ function buildMusicReadyEmailHtml(session, baseUrl) {
                     <p style="margin:0 0 6px;font-size:15px;color:#d93025;"><strong>Important:</strong></p>
                     <p style="margin:0;font-size:14px;line-height:1.5;">Please download and save your songs to your device as soon as possible. Your download links will remain available for <strong>15 days only</strong>. After that period, the files are automatically removed from our servers and can no longer be accessed.</p>
                 </div>
+
+                ${session.nextPurchaseCoupon ? `
+                <div style="background:#f0e9d6;padding:24px;border-radius:12px;color:#111111;margin:0 0 24px;border:1px solid #d4af37;">
+                    <h3 style="margin:0 0 8px;font-size:18px;color:#b03a3a;">A Gift For Your Next Song</h3>
+                    <p style="margin:0 0 12px;font-size:15px;">Thank you for your purchase! Use the code below on your next song to get <strong>£10.00 OFF</strong> (Valid for 30 days).</p>
+                    <div style="background:#fff;padding:12px;border-radius:8px;text-align:center;font-size:22px;font-weight:bold;letter-spacing:2px;color:#111;">
+                        ${session.nextPurchaseCoupon}
+                    </div>
+                </div>
+                ` : ""}
 
                 <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#eadfbf;">You can also access your music library here:</p>
                 <p style="margin:0 0 32px;">🔗 <strong><a href="${escapeHtml(libraryUrl)}" style="color:#ffd54d;text-decoration:none;">Open My Songs</a></strong></p>
@@ -2016,6 +2065,13 @@ app.get("/api/music/video-status", async (req, res) => {
     }
 });
 
+function generateEmotionalCouponCode() {
+    const prefixes = ["MEMORIES", "STORY", "MOMENT", "LOVE", "FOREVER", "SPECIAL", "HEART", "TUNES"];
+    const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+    const randomChars = crypto.randomBytes(2).toString("hex").toUpperCase();
+    return `${prefix}-${randomChars}`;
+}
+
 function markPaid(sessionId, payload = {}) {
     if (!sessionId) return;
     const paidAt = new Date().toISOString();
@@ -2028,6 +2084,30 @@ function markPaid(sessionId, payload = {}) {
         (tempSession.downloadUrl1 && tempSession.downloadUrl2) ||
         (existingPaidSession.downloadUrl1 && existingPaidSession.downloadUrl2)
     );
+    
+    // Check if an existing dynamic coupon was used
+    const appliedCouponCode = tempSession.appliedCoupon || existingPaidSession.appliedCoupon;
+    if (appliedCouponCode) {
+        const dyn = dynamicCoupons.get(appliedCouponCode.trim().toUpperCase());
+        if (dyn) {
+            upsertDynamicCoupon(dyn.code, { used: true, usedAt: paidAt, usedBySession: sessionId });
+        }
+    }
+
+    // Generate new coupon for next purchase
+    let nextPurchaseCoupon = tempSession.nextPurchaseCoupon || existingPaidSession.nextPurchaseCoupon;
+    if (!nextPurchaseCoupon) {
+        nextPurchaseCoupon = generateEmotionalCouponCode();
+        upsertDynamicCoupon(nextPurchaseCoupon, {
+            type: "fixed",
+            value: 10,
+            expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+            used: false,
+            createdAt: paidAt,
+            generatedForSession: sessionId
+        });
+    }
+
     const paidPayload = {
         paid: true,
         at: paidAt,
@@ -2035,6 +2115,7 @@ function markPaid(sessionId, payload = {}) {
         status: payload.status || null,
         creditRewarded: Boolean(alreadyRewarded || rewardedWallet),
         paidGenerationUsed: alreadyGeneratedMusic,
+        nextPurchaseCoupon,
     };
     paidSessions.set(sessionId, paidPayload);
     const savedTempSession = upsertTempMusicSession(sessionId, { ...paidPayload, paidAt });
@@ -2354,6 +2435,7 @@ app.post("/api/payment/create", async (req, res) => {
             customer_phone: customerPhone,
             customer_email: customerEmail,
             traffic_source: trafficSource,
+            coupon_code: couponCode,
         } = req.body || {};
         if (!sessionId) {
             return res.status(400).json({ error: "session_id is required." });
@@ -2368,7 +2450,23 @@ app.post("/api/payment/create", async (req, res) => {
             subtitle: "Payment started to unlock song production.",
             badge: "Payment started",
             trafficSource: normalizeTrafficSource(trafficSource),
+            appliedCoupon: couponCode || null,
         });
+
+        const coupon = resolveCoupon(couponCode);
+        const finalPrice = calculateDiscountedPrice(PAYPAL_PRICE_GBP, coupon);
+
+        // 100% FREE BYPASS for PayPal (if coupon covers entire amount)
+        if (finalPrice === 0) {
+            markPaid(sessionId, { paymentId: `coupon_${couponCode}`, status: "COMPLETED" });
+            upsertTempMusicSession(sessionId, {
+                paypalOrderId: `free_${Date.now()}`,
+                paypalOrderStatus: "COMPLETED"
+            });
+            const freeSession = getTempMusicSession(sessionId) || getPaidMusicSession(sessionId);
+            if (freeSession) upsertOrderReportFromSession(freeSession);
+            return res.json({ order_id: `free_${Date.now()}` }); // Client should handle this ID to skip PayPal popup
+        }
 
         const accessToken = await getPayPalAccessToken();
         const orderPayload = {
@@ -2380,7 +2478,7 @@ app.post("/api/payment/create", async (req, res) => {
                     description: PAYPAL_TITLE,
                     amount: {
                         currency_code: PAYPAL_CURRENCY,
-                        value: PAYPAL_PRICE_GBP.toFixed(2),
+                        value: finalPrice.toFixed(2),
                     },
                 },
             ],
@@ -2413,26 +2511,49 @@ app.post("/api/payment/create", async (req, res) => {
     }
 });
 
+function resolveCoupon(code) {
+    if (!code || typeof code !== "string") return null;
+    const upperCode = code.trim().toUpperCase();
+    
+    if (VALID_COUPONS[upperCode]) {
+        return { code: upperCode, ...VALID_COUPONS[upperCode] };
+    }
+    
+    const dyn = dynamicCoupons.get(upperCode);
+    if (dyn && !dyn.used) {
+        if (dyn.expiresAt && Date.now() > dyn.expiresAt) return null;
+        return { code: upperCode, type: dyn.type, value: dyn.value, isDynamic: true };
+    }
+    return null;
+}
+
+function calculateDiscountedPrice(basePrice, coupon) {
+    if (!coupon) return basePrice;
+    let finalPrice = basePrice;
+    if (coupon.type === "percent") {
+        finalPrice = finalPrice - (finalPrice * (coupon.value / 100));
+    } else if (coupon.type === "fixed") {
+        finalPrice = finalPrice - coupon.value;
+    }
+    return finalPrice > 0 ? finalPrice : 0;
+}
+
 // Validate Coupon Endpoint
 app.post("/api/coupon/validate", (req, res) => {
     try {
         const { code } = req.body;
-        if (!code || typeof code !== "string") {
-            return res.status(400).json({ valid: false, error: "Please enter a valid coupon code." });
-        }
-        const upperCode = code.trim().toUpperCase();
-        const coupon = VALID_COUPONS[upperCode];
+        const coupon = resolveCoupon(code);
         
         if (coupon) {
             return res.json({ 
                 valid: true, 
-                code: upperCode, 
+                code: coupon.code, 
                 type: coupon.type, 
                 value: coupon.value,
                 message: "Coupon applied successfully!"
             });
         } else {
-            return res.status(404).json({ valid: false, error: "Invalid or expired coupon." });
+            return res.status(404).json({ valid: false, error: "Invalid, used, or expired coupon." });
         }
     } catch (error) {
         return res.status(500).json({ valid: false, error: "Error validating coupon." });
@@ -2474,22 +2595,13 @@ app.post("/api/payment/stripe/create", async (req, res) => {
             subtitle: "Card checkout started to unlock song production.",
             badge: "Card checkout started",
             trafficSource: normalizeTrafficSource(trafficSource),
+            appliedCoupon: couponCode || null,
         });
 
         // Apply discount if a valid coupon was provided
         let finalPrice = getCheckoutPriceGbp();
-        if (couponCode && typeof couponCode === "string") {
-            const upperCode = couponCode.trim().toUpperCase();
-            const coupon = VALID_COUPONS[upperCode];
-            if (coupon) {
-                if (coupon.type === "percent") {
-                    finalPrice = finalPrice - (finalPrice * (coupon.value / 100));
-                } else if (coupon.type === "fixed") {
-                    finalPrice = finalPrice - coupon.value;
-                }
-                if (finalPrice < 0) finalPrice = 0;
-            }
-        }
+        const coupon = resolveCoupon(couponCode);
+        finalPrice = calculateDiscountedPrice(finalPrice, coupon);
 
         const baseUrl = getBaseUrl(req);
 

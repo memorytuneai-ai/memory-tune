@@ -2545,6 +2545,37 @@ body.payment-modal-open {
     box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.08);
 }
 
+.library-coupon-banner {
+    background: #f0e9d6;
+    border: 1px solid #d4af37;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    color: #111;
+    text-align: center;
+}
+.library-coupon-banner h3 {
+    color: #b03a3a;
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+}
+.library-coupon-banner p {
+    font-size: 1rem;
+    margin-bottom: 16px;
+    color: #333;
+}
+.coupon-code-box {
+    background: #fff;
+    padding: 14px 24px;
+    border-radius: 8px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #111;
+    display: inline-block;
+    border: 1px dashed #d4af37;
+}
+
 .library-grid {
     display: grid;
     gap: 22px;
