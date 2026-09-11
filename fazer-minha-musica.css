@@ -4480,13 +4480,13 @@ body.memory-body .hero-logo-art {
 @media (min-width: 900px) {
     .emotional-hero-container {
         max-width: 100%;
-        min-height: 700px;
-        padding-top: 80px;
+        min-height: 600px;
+        padding-top: 20px;
         padding-bottom: 80px;
         padding-left: max(40px, calc(50vw - 590px)); /* Align with 1180px topbar */
         padding-right: 0;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         margin: 0;
     }
 
