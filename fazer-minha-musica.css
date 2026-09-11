@@ -4479,12 +4479,15 @@ body.memory-body .hero-logo-art {
 /* PREMIUM DESKTOP LAYOUT */
 @media (min-width: 900px) {
     .emotional-hero-container {
-        max-width: 1200px;
+        max-width: 100%;
         min-height: 700px;
-        padding: 80px 40px;
+        padding-top: 80px;
+        padding-bottom: 80px;
+        padding-left: max(40px, calc(50vw - 590px)); /* Align with 1180px topbar */
+        padding-right: 0;
         display: flex;
         align-items: center;
-        margin: 0 auto;
+        margin: 0;
     }
 
     .hero-content-column {
@@ -4493,6 +4496,8 @@ body.memory-body .hero-logo-art {
         padding-right: 40px;
         display: flex;
         flex-direction: column;
+        position: relative;
+        z-index: 2;
     }
 
     .hero-headline-col {
@@ -4525,9 +4530,10 @@ body.memory-body .hero-logo-art {
         position: absolute;
         top: 0;
         right: 0;
-        width: 48%;
+        width: 55%;
         height: 100%;
         max-width: none;
+        z-index: 1;
     }
 
     /* Refine the fade for desktop proportions */
