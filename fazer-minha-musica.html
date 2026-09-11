@@ -92,78 +92,123 @@
         <div class="container topbar">
             <a href="#top" class="brand-link">
                 <img src="logo.png?v=memorytune-20260510" alt="Memory Tune" class="brand-logo" onerror="this.style.display='none'">
-                <span>Memory Tune</span>
+                <div class="brand-title-block">
+                    <span class="brand-main-text">MEMORY TUNE</span>
+                    <span class="brand-sub-text">SONGS THAT LAST</span>
+                </div>
             </a>
             <div class="topbar-links">
-                <a href="/my-songs" class="ghost-link ghost-link-primary">My songs</a>
+                <a href="/my-songs" class="my-songs-pill"><i class="fa-solid fa-music"></i> My songs</a>
+                <button type="button" class="topbar-menu-toggle" aria-label="Open menu"><i class="fa-solid fa-bars"></i></button>
             </div>
         </div>
     </header>
 
     <main>
-        <section class="builder-hero new-hero">
-            <div class="hero-bg-image"></div>
-            <div class="container hero-shell">
-                <div class="hero-copy reveal">
-                    <div class="hero-eyebrow-wrapper">
-                        <span class="new-eyebrow">SOME MOMENTS DESERVE A SONG</span>
-                        <i class="fa-regular fa-heart eyebrow-heart"></i>
-                    </div>
-                    
-                    <h1>Turn your love, memories and feelings <span class="text-highlight">into music.</span></h1>
-                    
-                    <div style="position: relative;">
-                        <p class="hero-lead">A unique and personalised song, created just for you — because the most special moments deserve more than words.</p>
-                        <div class="handwritten-text text-stories">Real<br>Stories.<br>Real<br>Emotions.<br><i class="fa-regular fa-heart"></i></div>
-                    </div>
-                    
-                    <div style="position: relative; margin-bottom: 20px;">
-                        <div class="handwritten-text text-gift">More<br>than a gift...<br>a memory for life. <i class="fa-regular fa-heart"></i></div>
-                        <div class="hero-price-card">
-                            <div class="price-left">
-                                <span class="price-label">YOUR SONG, JUST</span>
-                                <strong>£14.99</strong>
-                            </div>
-                            <div class="price-divider"></div>
-                            <div class="price-right">
-                                A one-of-a-kind song, made<br>just for you.
-                            </div>
+        <section class="builder-hero emotional-hero">
+            <div class="emotional-hero-container">
+                <!-- Top Section: Text on left + Couple Photo on right -->
+                <div class="hero-header-stage">
+                    <div class="hero-couple-visual">
+                        <img src="couple-sunset.jpg" alt="Couple embrace at sunset" class="couple-photo-element">
+                        <div class="couple-overlay-script">
+                            Real<br>Stories.<br>Real<br>Emotions.<br>
+                            <i class="fa-regular fa-heart"></i>
                         </div>
                     </div>
-                    
-                    <div class="hero-feature-cards">
-                        <div class="feature-card feature-pink">
-                            <div class="feature-icon"><i class="fa-solid fa-music"></i></div>
-                            <div class="feature-text">
-                                <span class="feature-title">You receive<br><strong>TWO SONGS</strong></span>
-                                <span class="feature-desc">Two unique versions<br>of your story.</span>
-                            </div>
+
+                    <div class="hero-headline-col">
+                        <div class="hero-eyebrow-line">
+                            <span class="eyebrow-text">SOME MOMENTS DESERVE A SONG</span>
+                            <svg class="eyebrow-heart-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#9e7f5f" stroke-width="1.8">
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                            </svg>
                         </div>
-                        <div class="feature-card feature-green">
-                            <div class="feature-icon"><i class="fa-solid fa-bolt"></i></div>
-                            <div class="feature-text">
-                                <span class="feature-title">Ready for download in<br><strong>up to 5 minutes</strong></span>
-                                <span class="feature-desc">Fast, easy and<br>hassle-free.</span>
-                            </div>
+
+                        <h1 class="hero-editorial-title">
+                            Turn your<br>
+                            love, memories<br>
+                            and feelings<br>
+                            <span class="title-copper">into music.</span>
+                        </h1>
+
+                        <p class="hero-editorial-desc">
+                            A unique and personalised song, created just for you — because the most special moments deserve more than words.
+                        </p>
+
+                        <div class="hero-callout-gift">
+                            <span class="callout-script">More<br>than a gift...<br>a memory for life. <i class="fa-regular fa-heart"></i></span>
+                            <div class="callout-brush-stroke"></div>
                         </div>
-                    </div>
-                    
-                    <div class="hero-trust-badges">
-                        <span><i class="fa-solid fa-shield-halved"></i> Secure payment</span>
-                        <span><i class="fa-solid fa-infinity"></i> A gift that lasts forever</span>
-                        <span><i class="fa-regular fa-face-smile"></i> 100% personalised</span>
-                    </div>
-                    
-                    <div class="hero-actions-bottom">
-                        <a href="#occasionStart" class="btn-hero-main">Create my song <i class="fa-solid fa-arrow-right"></i></a>
-                        <span class="hero-footer-text">BECAUSE EVERY STORY SOUNDS BETTER <i class="fa-regular fa-heart"></i></span>
                     </div>
                 </div>
-                
-                <div class="hero-logo-panel reveal" aria-hidden="true">
-                    <div class="hero-logo-card">
-                        <img src="logo.png?v=memorytune-20260510" alt="Memory Tune logo" class="hero-logo-art"
-                            onerror="this.closest('.hero-logo-panel').style.display='none'">
+
+                <!-- Price Card -->
+                <div class="hero-pricing-box">
+                    <div class="pricing-box-left">
+                        <span class="pricing-label-kicker">YOUR SONG, JUST</span>
+                        <div class="pricing-val-wrap">
+                            <strong class="pricing-val-number">£14.99</strong>
+                            <div class="pricing-val-brush"></div>
+                        </div>
+                    </div>
+                    <div class="pricing-box-divider"></div>
+                    <div class="pricing-box-right">
+                        A one-of-a-kind song, made just for you.
+                    </div>
+                </div>
+
+                <!-- Feature Perks (2 side-by-side cards) -->
+                <div class="hero-perks-row">
+                    <div class="perk-box perk-box-pink">
+                        <div class="perk-circle-icon icon-peach">
+                            <i class="fa-solid fa-music"></i>
+                        </div>
+                        <div class="perk-content-wrap">
+                            <span class="perk-mini-title">You receive</span>
+                            <strong class="perk-main-text">TWO SONGS</strong>
+                            <span class="perk-detail-text">Two unique versions of your story.</span>
+                        </div>
+                    </div>
+                    <div class="perk-box perk-box-green">
+                        <div class="perk-circle-icon icon-mint">
+                            <i class="fa-solid fa-bolt"></i>
+                        </div>
+                        <div class="perk-content-wrap">
+                            <span class="perk-mini-title">Ready for download in</span>
+                            <strong class="perk-main-text">up to 5 minutes</strong>
+                            <span class="perk-detail-text">Fast, easy and hassle-free.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trust Badges -->
+                <div class="hero-reassurance-row">
+                    <div class="reassurance-item">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span>Secure payment</span>
+                    </div>
+                    <div class="reassurance-item">
+                        <i class="fa-solid fa-infinity"></i>
+                        <span>A gift that lasts forever</span>
+                    </div>
+                    <div class="reassurance-item">
+                        <i class="fa-regular fa-face-smile"></i>
+                        <span>100% personalised</span>
+                    </div>
+                </div>
+
+                <!-- CTA Button -->
+                <div class="hero-cta-section">
+                    <a href="#occasionStart" class="btn-hero-primary-cta">
+                        <span>Create my song</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                    <div class="hero-tagline-footer">
+                        <span>BECAUSE EVERY STORY SOUNDS BETTER</span>
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#9e7f5f" stroke-width="2">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
                     </div>
                 </div>
             </div>

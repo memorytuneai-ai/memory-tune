@@ -613,9 +613,9 @@ function setFloatingCtaHiddenOnMobile(isHidden) {
     floatingCta.classList.toggle("is-hidden-mobile", isHidden);
 }
 
-// Hide floating CTA when new-hero is visible so they don't overlap
+// Hide floating CTA when emotional-hero is visible so they don't overlap
 if (floatingCta) {
-    const heroSection = document.querySelector('.new-hero');
+    const heroSection = document.querySelector('.emotional-hero') || document.querySelector('.builder-hero');
     if (heroSection) {
         const heroObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
