@@ -4476,3 +4476,140 @@ body.memory-body .hero-logo-art {
     }
 }
 
+/* PREMIUM DESKTOP LAYOUT */
+@media (min-width: 900px) {
+    .emotional-hero-container {
+        max-width: 1200px;
+        min-height: 700px;
+        padding: 80px 40px;
+        display: flex;
+        align-items: center;
+        margin: 0 auto;
+    }
+
+    .hero-content-column {
+        width: 55%;
+        max-width: 600px;
+        padding-right: 40px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .hero-headline-col {
+        width: 100%;
+        max-width: none;
+    }
+
+    .hero-editorial-title {
+        font-size: 64px;
+        line-height: 1.05;
+        margin-bottom: 24px;
+    }
+
+    .hero-editorial-desc {
+        font-size: 18px;
+        margin-bottom: 24px;
+        max-width: 90%;
+    }
+
+    .hero-callout-gift {
+        margin-top: 10px;
+        margin-bottom: 30px;
+    }
+
+    .callout-script {
+        font-size: 26px;
+    }
+
+    .hero-couple-visual {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 48%;
+        height: 100%;
+        max-width: none;
+    }
+
+    /* Refine the fade for desktop proportions */
+    .hero-couple-visual::before {
+        background:
+            linear-gradient(to right, #faf6f0 0%, rgba(250,246,240,0.85) 30%, transparent 60%),
+            linear-gradient(to top, #faf6f0 0%, rgba(250,246,240,0.9) 20%, transparent 50%),
+            linear-gradient(to bottom, #faf6f0 0%, rgba(250,246,240,0.4) 10%, transparent 30%);
+    }
+
+    .couple-photo-element {
+        mask-image: radial-gradient(circle at 80% 30%, black 45%, transparent 75%);
+        -webkit-mask-image: radial-gradient(circle at 80% 30%, black 45%, transparent 75%);
+    }
+
+    .couple-overlay-script {
+        font-size: 28px;
+        bottom: 120px;
+        right: 60px;
+    }
+
+    .hero-pricing-box {
+        padding: 24px 30px;
+        border-radius: 24px;
+        gap: 24px;
+        margin-bottom: 24px;
+        max-width: 100%;
+    }
+
+    .pricing-val-number {
+        font-size: 56px;
+    }
+
+    .pricing-box-right {
+        font-size: 16px;
+    }
+
+    .hero-perks-row {
+        gap: 16px !important;
+        margin-bottom: 24px;
+        max-width: 100%;
+    }
+
+    .perk-box {
+        padding: 20px;
+        border-radius: 20px;
+        gap: 16px;
+    }
+
+    .perk-circle-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
+    }
+
+    .perk-mini-title { font-size: 13px; }
+    .perk-main-text { font-size: 16px; }
+    .perk-detail-text { font-size: 12px; }
+
+    .hero-reassurance-row {
+        justify-content: flex-start !important;
+        gap: 30px !important;
+        margin-bottom: 30px;
+    }
+
+    .reassurance-item {
+        font-size: 13px;
+    }
+
+    .hero-cta-section {
+        align-items: flex-start;
+    }
+
+    .btn-hero-primary-cta {
+        width: auto;
+        padding: 20px 40px;
+        font-size: 18px;
+    }
+
+    .hero-tagline-footer {
+        justify-content: flex-start;
+        margin-top: 16px;
+        font-size: 11px;
+    }
+}

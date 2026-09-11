@@ -107,16 +107,17 @@
     <main>
         <section class="builder-hero emotional-hero">
             <div class="emotional-hero-container">
-                <!-- Top Section: Text on left + Couple Photo on right -->
-                <div class="hero-header-stage">
-                    <div class="hero-couple-visual">
-                        <img src="couple-sunset.jpg" alt="Couple embrace at sunset" class="couple-photo-element">
-                        <div class="couple-overlay-script">
-                            Real<br>Stories.<br>Real<br>Emotions.<br>
-                            <i class="fa-regular fa-heart"></i>
-                        </div>
+                <!-- Visual (Absolute positioned on mobile and desktop) -->
+                <div class="hero-couple-visual">
+                    <img src="couple-sunset.jpg" alt="Couple embrace at sunset" class="couple-photo-element">
+                    <div class="couple-overlay-script">
+                        Real<br>Stories.<br>Real<br>Emotions.<br>
+                        <i class="fa-regular fa-heart"></i>
                     </div>
+                </div>
 
+                <!-- Content (Left side on desktop) -->
+                <div class="hero-content-column">
                     <div class="hero-headline-col">
                         <div class="hero-eyebrow-line">
                             <span class="eyebrow-text">SOME MOMENTS DESERVE A SONG</span>
@@ -141,74 +142,74 @@
                             <div class="callout-brush-stroke"></div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Price Card -->
-                <div class="hero-pricing-box">
-                    <div class="pricing-box-left">
-                        <span class="pricing-label-kicker">YOUR SONG, JUST</span>
-                        <div class="pricing-val-wrap">
-                            <strong class="pricing-val-number">£14.99</strong>
-                            <div class="pricing-val-brush"></div>
+                    <!-- Price Card -->
+                    <div class="hero-pricing-box">
+                        <div class="pricing-box-left">
+                            <span class="pricing-label-kicker">YOUR SONG, JUST</span>
+                            <div class="pricing-val-wrap">
+                                <strong class="pricing-val-number">£14.99</strong>
+                                <div class="pricing-val-brush"></div>
+                            </div>
+                        </div>
+                        <div class="pricing-box-divider"></div>
+                        <div class="pricing-box-right">
+                            A one-of-a-kind song, made just for you.
                         </div>
                     </div>
-                    <div class="pricing-box-divider"></div>
-                    <div class="pricing-box-right">
-                        A one-of-a-kind song, made just for you.
-                    </div>
-                </div>
 
-                <!-- Feature Perks (2 side-by-side cards) -->
-                <div class="hero-perks-row">
-                    <div class="perk-box perk-box-pink">
-                        <div class="perk-circle-icon icon-peach">
-                            <i class="fa-solid fa-music"></i>
+                    <!-- Feature Perks (2 side-by-side cards) -->
+                    <div class="hero-perks-row">
+                        <div class="perk-box perk-box-pink">
+                            <div class="perk-circle-icon icon-peach">
+                                <i class="fa-solid fa-music"></i>
+                            </div>
+                            <div class="perk-content-wrap">
+                                <span class="perk-mini-title">You receive</span>
+                                <strong class="perk-main-text">TWO SONGS</strong>
+                                <span class="perk-detail-text">Two unique versions of your story.</span>
+                            </div>
                         </div>
-                        <div class="perk-content-wrap">
-                            <span class="perk-mini-title">You receive</span>
-                            <strong class="perk-main-text">TWO SONGS</strong>
-                            <span class="perk-detail-text">Two unique versions of your story.</span>
+                        <div class="perk-box perk-box-green">
+                            <div class="perk-circle-icon icon-mint">
+                                <i class="fa-solid fa-bolt"></i>
+                            </div>
+                            <div class="perk-content-wrap">
+                                <span class="perk-mini-title">Ready for download in</span>
+                                <strong class="perk-main-text">up to 5 minutes</strong>
+                                <span class="perk-detail-text">Fast, easy and hassle-free.</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="perk-box perk-box-green">
-                        <div class="perk-circle-icon icon-mint">
-                            <i class="fa-solid fa-bolt"></i>
-                        </div>
-                        <div class="perk-content-wrap">
-                            <span class="perk-mini-title">Ready for download in</span>
-                            <strong class="perk-main-text">up to 5 minutes</strong>
-                            <span class="perk-detail-text">Fast, easy and hassle-free.</span>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Trust Badges -->
-                <div class="hero-reassurance-row">
-                    <div class="reassurance-item">
-                        <i class="fa-solid fa-shield-halved"></i>
-                        <span>Secure payment</span>
+                    <!-- Trust Badges -->
+                    <div class="hero-reassurance-row">
+                        <div class="reassurance-item">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <span>Secure payment</span>
+                        </div>
+                        <div class="reassurance-item">
+                            <i class="fa-solid fa-infinity"></i>
+                            <span>A gift that lasts forever</span>
+                        </div>
+                        <div class="reassurance-item">
+                            <i class="fa-regular fa-face-smile"></i>
+                            <span>100% personalised</span>
+                        </div>
                     </div>
-                    <div class="reassurance-item">
-                        <i class="fa-solid fa-infinity"></i>
-                        <span>A gift that lasts forever</span>
-                    </div>
-                    <div class="reassurance-item">
-                        <i class="fa-regular fa-face-smile"></i>
-                        <span>100% personalised</span>
-                    </div>
-                </div>
 
-                <!-- CTA Button -->
-                <div class="hero-cta-section">
-                    <a href="#occasionStart" class="btn-hero-primary-cta">
-                        <span>Create my song</span>
-                        <i class="fa-solid fa-arrow-right"></i>
-                    </a>
-                    <div class="hero-tagline-footer">
-                        <span>BECAUSE EVERY STORY SOUNDS BETTER</span>
-                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#9e7f5f" stroke-width="2">
-                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                        </svg>
+                    <!-- CTA Button -->
+                    <div class="hero-cta-section">
+                        <a href="#occasionStart" class="btn-hero-primary-cta">
+                            <span>Create my song</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                        <div class="hero-tagline-footer">
+                            <span>BECAUSE EVERY STORY SOUNDS BETTER</span>
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#9e7f5f" stroke-width="2">
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                            </svg>
+                        </div>
                     </div>
                 </div>
             </div>
