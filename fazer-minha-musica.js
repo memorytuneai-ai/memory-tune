@@ -1546,7 +1546,7 @@ async function createMusicTask(payload) {
 }
 
 async function fetchConversion(conversionId) {
-    const response = await fetch(apiUrl(`/api/music/status?conversion_id=${conversionId}`));
+    const response = await fetch(apiUrl(`/api/music/status?conversion_id=${conversionId}&session_id=${currentMusicSessionId}`));
     const data = await response.json();
     if (!response.ok) {
         throw new Error(data.error || "We could not check the song status.");

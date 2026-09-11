@@ -3983,3 +3983,354 @@ body.memory-body .hero-logo-art {
     60%  { transform: scale(1.06); opacity: 1; }
     100% { transform: scale(1);    opacity: 1; }
 }
+
+/* =======================================
+   NEW HERO REDESIGN (MOBILE & DESKTOP)
+======================================= */
+
+.new-hero {
+    position: relative;
+    padding: 0;
+    overflow: hidden;
+    background: #fdfbf7;
+    z-index: 1;
+}
+
+.new-hero .hero-bg-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('couple-sunset.jpg') center center / cover no-repeat;
+    z-index: -1;
+    opacity: 0.9;
+    /* Soft gradient overlay to blend into the cream background */
+    mask-image: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 50%);
+    -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 50%);
+}
+
+.new-hero .hero-copy {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 60px 40px;
+    max-width: 600px;
+    position: relative;
+}
+
+.hero-eyebrow-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.hero-eyebrow-wrapper .eyebrow {
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: #9e7f5b;
+    text-transform: uppercase;
+}
+
+.hero-eyebrow-wrapper .eyebrow-heart {
+    color: #9e7f5b;
+    font-size: 1.2rem;
+}
+
+.new-hero h1 {
+    font-family: var(--font-heading);
+    font-size: 4rem;
+    font-weight: 600;
+    color: #111;
+    line-height: 1;
+    margin-bottom: 24px;
+}
+
+.new-hero h1 .text-highlight {
+    color: #9b5a32;
+}
+
+.hero-lead {
+    font-size: 1.15rem;
+    color: #444;
+    line-height: 1.5;
+    margin-bottom: 80px; /* Space for the handwritten text */
+}
+
+.handwritten-text {
+    font-family: 'Dancing Script', cursive;
+    color: #9b5a32;
+    position: absolute;
+    transform: rotate(-5deg);
+    line-height: 1.2;
+    z-index: 2;
+}
+
+.text-gift {
+    font-size: 1.8rem;
+    left: 40px;
+    top: 360px;
+}
+
+.text-stories {
+    font-size: 2.2rem;
+    right: -100px; /* On desktop, place it way on the right */
+    top: 250px;
+    color: #fff; /* Might be over the dark image on desktop */
+}
+
+.hero-price-card {
+    background: #fdfaf4;
+    border-radius: 20px;
+    padding: 30px;
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+    margin-bottom: 20px;
+}
+
+.hero-price-card .price-left {
+    display: flex;
+    flex-direction: column;
+}
+
+.hero-price-card .price-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: #9e7f5b;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+
+.hero-price-card strong {
+    font-family: var(--font-heading);
+    font-size: 4.5rem;
+    font-weight: 500;
+    color: #111;
+    line-height: 0.9;
+}
+
+.hero-price-card .price-divider {
+    width: 1px;
+    height: 60px;
+    background: rgba(158, 127, 91, 0.2);
+}
+
+.hero-price-card .price-right {
+    font-size: 1.1rem;
+    color: #555;
+    line-height: 1.4;
+}
+
+.hero-feature-cards {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 30px;
+}
+
+.feature-card {
+    flex: 1;
+    border-radius: 20px;
+    padding: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+}
+
+.feature-pink {
+    background: #fdf3f3;
+}
+
+.feature-green {
+    background: #f2f8f4;
+}
+
+.feature-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+.feature-pink .feature-icon {
+    background: #f3e1e1;
+    color: #6a4242;
+}
+
+.feature-green .feature-icon {
+    background: #dcece1;
+    color: #426a4c;
+}
+
+.feature-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.feature-title {
+    font-size: 0.95rem;
+    color: #222;
+    line-height: 1.3;
+}
+
+.feature-desc {
+    font-size: 0.85rem;
+    color: #666;
+    line-height: 1.3;
+}
+
+.hero-trust-badges {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 0;
+    border-top: 1px solid rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+
+.hero-trust-badges span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #444;
+}
+
+.hero-trust-badges i {
+    font-size: 1.2rem;
+    color: #666;
+}
+
+.hero-actions-fixed {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn-hero-main {
+    background: #151515;
+    color: #fff;
+    border-radius: 999px;
+    padding: 22px 40px;
+    font-size: 1.25rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.btn-hero-main:hover {
+    background: #000;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.hero-footer-text {
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    color: #888;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Light Header Override for New Hero */
+.page-header {
+    background: #fcfbfa !important;
+    border-bottom: none !important;
+}
+
+.brand-link span { color: #111 !important; }
+.brand-link img { filter: invert(1); }
+
+.ghost-link-primary {
+    background: #f0ebe1 !important;
+    color: #111 !important;
+    border: none !important;
+}
+
+@media (max-width: 768px) {
+    .new-hero {
+        padding-top: 20px;
+    }
+    
+    .new-hero .hero-bg-image {
+        mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,1) 80%);
+        -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,1) 80%);
+    }
+
+    .new-hero .hero-copy {
+        padding: 10px 15px;
+    }
+    
+    .text-gift {
+        font-size: 1.6rem;
+        left: 20px;
+        top: 360px;
+    }
+    
+    .text-stories {
+        font-size: 1.8rem;
+        right: 15px;
+        top: 240px;
+        color: #fff;
+    }
+    
+    .new-hero h1 {
+        font-size: 3.2rem;
+    }
+    
+    .hero-price-card {
+        padding: 20px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+        position: relative;
+    }
+    
+    .hero-price-card .price-divider {
+        width: 1px;
+        height: 80%;
+        position: absolute;
+        right: 40%;
+        top: 10%;
+    }
+    
+    .hero-feature-cards {
+        flex-direction: column;
+    }
+    
+    .hero-trust-badges {
+        flex-direction: row;
+        justify-content: space-between;
+        gap: 5px;
+    }
+    
+    .hero-trust-badges span {
+        flex-direction: column;
+        text-align: center;
+        font-size: 0.75rem;
+    }
+    
+    .hero-actions-fixed {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        background: linear-gradient(to top, rgba(253, 251, 247, 1) 70%, rgba(253, 251, 247, 0));
+        padding: 20px 20px 30px;
+        z-index: 100;
+    }
+}

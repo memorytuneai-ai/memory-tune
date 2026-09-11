@@ -7,6 +7,20 @@ const path = require("path");
 const { Readable } = require("stream");
 const Stripe = require("stripe");
 
+const { promises: fsPromises } = fs;
+const writeQueue = new Map();
+
+async function asyncWriteJson(filePath, data) {
+    if (writeQueue.has(filePath)) {
+        await writeQueue.get(filePath);
+    }
+    const payload = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+    const writePromise = fsPromises.writeFile(filePath, payload, "utf8").catch(err => console.error("Write error:", err));
+    writeQueue.set(filePath, writePromise);
+    await writePromise;
+    writeQueue.delete(filePath);
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -404,7 +418,7 @@ function loadPaidMusicSessions() {
 function persistTempMusicSessions() {
     try {
         const payload = JSON.stringify(Array.from(tempMusicSessions.values()), null, 2);
-        fs.writeFileSync(TEMP_MUSIC_LIBRARY_FILE, payload, "utf8");
+        asyncWriteJson(TEMP_MUSIC_LIBRARY_FILE, payload);
     } catch (error) {
         console.error("Erro ao salvar biblioteca temporaria de musicas", error);
     }
@@ -413,7 +427,7 @@ function persistTempMusicSessions() {
 function persistPaidMusicSessions() {
     try {
         const payload = JSON.stringify(Array.from(paidMusicSessions.values()), null, 2);
-        fs.writeFileSync(PAID_MUSIC_LIBRARY_FILE, payload, "utf8");
+        asyncWriteJson(PAID_MUSIC_LIBRARY_FILE, payload);
     } catch (error) {
         console.error("Erro ao salvar biblioteca permanente de musicas pagas", error);
     }
@@ -446,7 +460,7 @@ function loadPreviewCreditWallets() {
 function persistPreviewCreditWallets() {
     try {
         const payload = JSON.stringify(Array.from(previewCreditWallets.values()), null, 2);
-        fs.writeFileSync(PREVIEW_CREDIT_WALLETS_FILE, payload, "utf8");
+        asyncWriteJson(PREVIEW_CREDIT_WALLETS_FILE, payload);
     } catch (error) {
         console.error("Erro ao salvar creditos de previas", error);
     }
@@ -471,7 +485,7 @@ function loadOrderReports() {
 function persistOrderReports() {
     try {
         const payload = JSON.stringify(Array.from(orderReports.values()), null, 2);
-        fs.writeFileSync(ORDER_REPORT_FILE, payload, "utf8");
+        asyncWriteJson(ORDER_REPORT_FILE, payload);
     } catch (error) {
         console.error("Erro ao salvar planilha de pedidos", error);
     }
@@ -496,7 +510,7 @@ function loadDynamicCoupons() {
 function persistDynamicCoupons() {
     try {
         const payload = JSON.stringify(Array.from(dynamicCoupons.values()), null, 2);
-        fs.writeFileSync(DYNAMIC_COUPONS_FILE, payload, "utf8");
+        asyncWriteJson(DYNAMIC_COUPONS_FILE, payload);
     } catch (error) {
         console.error("Erro ao salvar cupons dinamicos", error);
     }
@@ -1510,7 +1524,7 @@ async function sendMusicReadyEmail(session, baseUrl) {
     return response.json().catch(() => ({}));
 }
 
-async function sendMusicReadyEmailIfEligible(sessionId, baseUrl) {
+async function sendMusicReadyEmailIfEligible(sessionId, baseUrl, force = false) {
     if (!sessionId || !RESEND_API_KEY || !RESEND_FROM_EMAIL) return { skipped: true, reason: "email_disabled" };
 
     const tempSession = getTempMusicSession(sessionId);
@@ -1520,7 +1534,7 @@ async function sendMusicReadyEmailIfEligible(sessionId, baseUrl) {
     if (!session?.paid) return { skipped: true, reason: "not_paid" };
     if (!session.downloadUrl1 || !session.downloadUrl2) return { skipped: true, reason: "audio_not_ready" };
     if (!isValidEmailAddress(session.customerEmail)) return { skipped: true, reason: "invalid_email" };
-    if (session.emailSentAt) return { skipped: true, reason: "already_sent" };
+    if (!force && session.emailSentAt) return { skipped: true, reason: "already_sent" };
 
     try {
         await sendMusicReadyEmail(session, baseUrl);
@@ -1575,7 +1589,29 @@ function normalizeVoiceGender(value = "") {
     if (["female", "feminina", "feminine", "woman"].includes(normalized)) return "female";
     return "";
 }
-app.post("/api/generate-lyrics", async (req, res) => {
+const ipRateLimits = new Map();
+function aiRateLimit(req, res, next) {
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip;
+    const now = Date.now();
+    const windowMs = 60 * 60 * 1000; 
+    const max = 10;
+    
+    const record = ipRateLimits.get(ip) || { count: 0, resetAt: now + windowMs };
+    if (now > record.resetAt) {
+        record.count = 0;
+        record.resetAt = now + windowMs;
+    }
+    
+    record.count++;
+    ipRateLimits.set(ip, record);
+    
+    if (record.count > max) {
+        return res.status(429).json({ error: "Too many requests. Please try again later." });
+    }
+    next();
+}
+
+app.post("/api/generate-lyrics", aiRateLimit, async (req, res) => {
     try {
         if (!GEMINI_API_KEY) {
             return res.status(400).json({ error: "GEMINI_API_KEY is not configured in the .env file." });
@@ -1623,7 +1659,7 @@ app.post("/api/generate-lyrics", async (req, res) => {
 
 
 
-app.post("/api/music/create", async (req, res) => {
+app.post("/api/music/create", aiRateLimit, async (req, res) => {
     let consumedPhone = "";
     let shouldRefundCredit = false;
     try {
@@ -1798,20 +1834,84 @@ app.get("/api/music/status", async (req, res) => {
         }
 
         const taskPayload = data?.data || data;
-        const audioUrl = resolveSunoAudioUrl(taskPayload, conversionId);
         const rawStatus = normalizeSunoStatus(taskPayload);
-        const safeStatus = audioUrl ? "COMPLETED" : rawStatus;
+        const actualAudioUrl = resolveSunoAudioUrl(taskPayload, conversionId);
+        const safeStatus = actualAudioUrl ? "COMPLETED" : rawStatus;
         const debug = req.query.debug === "1";
+
+        const sessionId = req.query.session_id || "";
+        const paidSession = sessionId ? (getPaidMusicSession(sessionId) || getTempMusicSession(sessionId)) : null;
+        const isPaid = Boolean(paidSession?.paid);
+
+        // ALWAYS mask the actual Suno URL via proxy to prevent direct download bypassing.
+        const proxiedAudioUrl = actualAudioUrl ? `/api/music/proxy-preview?conversion_id=${encodeURIComponent(conversionId)}&session_id=${encodeURIComponent(sessionId)}` : "";
 
         return res.json({
             status: safeStatus,
-            audio_url: audioUrl || "",
+            audio_url: proxiedAudioUrl || "",
             source_status: rawStatus,
             raw: debug ? taskPayload : undefined,
             provider: "kie-suno",
         });
     } catch (error) {
         return res.status(500).json({ error: error.message || "Erro interno ao consultar Suno via Kie AI." });
+    }
+});
+
+app.get("/api/music/proxy-preview", async (req, res) => {
+    try {
+        const conversionId = req.query.conversion_id;
+        const sessionId = req.query.session_id;
+
+        if (!conversionId) return res.status(400).json({ error: "Missing conversion_id" });
+
+        const parsed = parseSunoVariantId(conversionId);
+        const response = await fetch("https://api.kie.ai/api/v1/generate/record-info?taskId=" + encodeURIComponent(parsed.taskId), {
+            headers: { Authorization: "Bearer " + KIE_SUNO_API_KEY }
+        });
+        const data = await response.json();
+        const taskPayload = data?.data || data;
+        const audioUrl = resolveSunoAudioUrl(taskPayload, conversionId);
+
+        if (!audioUrl) return res.status(404).json({ error: "Audio not ready" });
+
+        const isPaid = Boolean((getPaidMusicSession(sessionId) || getTempMusicSession(sessionId))?.paid);
+
+        const isHttps = audioUrl.startsWith('https');
+        const getLib = isHttps ? require('https') : require('http');
+        getLib.get(audioUrl, (proxyRes) => {
+            if (proxyRes.statusCode !== 200) {
+                return res.status(proxyRes.statusCode).end();
+            }
+            
+            res.setHeader('Content-Type', 'audio/mpeg');
+            res.setHeader('Accept-Ranges', 'none'); 
+
+            if (isPaid) {
+                proxyRes.pipe(res);
+            } else {
+                const MAX_BYTES = 600000;
+                let downloaded = 0;
+                
+                proxyRes.on('data', (chunk) => {
+                    if (downloaded >= MAX_BYTES) return;
+                    
+                    if (downloaded + chunk.length > MAX_BYTES) {
+                        res.write(chunk.slice(0, MAX_BYTES - downloaded));
+                        downloaded = MAX_BYTES;
+                        res.end();
+                        proxyRes.destroy(); 
+                    } else {
+                        res.write(chunk);
+                        downloaded += chunk.length;
+                    }
+                });
+                proxyRes.on('end', () => { if (!res.writableEnded) res.end(); });
+                proxyRes.on('error', () => { if (!res.writableEnded) res.end(); });
+            }
+        }).on('error', () => res.status(500).end());
+    } catch (e) {
+        res.status(500).end();
     }
 });
 
@@ -1864,7 +1964,7 @@ app.post("/api/kie/suno/video-callback", (req, res) => {
     }
 });
 
-app.post("/api/music/create-video", async (req, res) => {
+app.post("/api/music/create-video", aiRateLimit, async (req, res) => {
     try {
         if (!KIE_SUNO_API_KEY) {
             return res.status(400).json({ error: "API Key not configured." });
@@ -2221,6 +2321,11 @@ app.post("/api/music-session/save", (req, res) => {
             return res.status(400).json({ error: "session_id and music links are required." });
         }
 
+        const existingPaid = getPaidMusicSession(sessionId);
+        if (existingPaid?.paid && (existingPaid.downloadUrl1 || existingPaid.downloadUrl2)) {
+            return res.status(403).json({ error: "Cannot modify a paid and completed session." });
+        }
+
         const saved = upsertTempMusicSession(sessionId, {
             customerKey: customerKey || "",
             clientName: clientName || "",
@@ -2288,56 +2393,68 @@ app.get("/api/music-library", (req, res) => {
     let customerPhone = normalizeWhatsAppNumber(req.query.customer_phone || "");
     const sessionId = String(req.query.session_id || "").trim();
 
-    if (sessionId && (!customerKey || !customerPhone)) {
-        const sessionMatch = getTempMusicSession(sessionId) || getPaidMusicSession(sessionId);
-        if (sessionMatch) {
-            customerKey = customerKey || String(sessionMatch.customerKey || "").trim();
-            customerPhone = customerPhone || normalizeWhatsAppNumber(sessionMatch.customerPhone || "");
-        }
-    }
-
-    if (!customerKey && !customerPhone) {
+    if (!customerKey && !customerPhone && !sessionId) {
         return res.status(400).json({ error: "customer_key, customer_phone ou session_id e obrigatorio." });
     }
 
     pruneExpiredTempMusicSessions();
     pruneExpiredPaidMusicSessions();
 
-    const matchesCustomer = (session) => {
-        if (!session) return false;
+    const allSessions = [...tempMusicSessions.values(), ...paidMusicSessions.values()];
+    const secureMatches = new Set();
+    
+    allSessions.forEach(session => {
+        if (!session) return;
         const sessionKey = String(session.customerKey || "").trim();
-        const sessionPhone = normalizeWhatsAppNumber(session.customerPhone || "");
-        if (customerKey && sessionKey === customerKey) return true;
-        if (customerPhone && sessionPhone === customerPhone) return true;
-        return false;
-    };
+        if (sessionId && session.sessionId === sessionId) secureMatches.add(session);
+        if (customerKey && sessionKey === customerKey && customerKey.length > 10) secureMatches.add(session);
+    });
 
-    const tempItems = Array.from(tempMusicSessions.values())
-        .filter(matchesCustomer)
-        .map((session) => serializeMusicSession(session, session.sessionId));
+    let triggeredEmail = false;
+    let missingEmailCount = 0;
+    
+    if (customerPhone) {
+        const phoneMatches = allSessions.filter(s => normalizeWhatsAppNumber(s.customerPhone) === customerPhone);
+        const insecurePhoneMatches = phoneMatches.filter(s => !secureMatches.has(s));
+        
+        if (insecurePhoneMatches.length > 0) {
+            const withEmail = insecurePhoneMatches.filter(s => s.customerEmail).sort((a,b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime());
+            if (withEmail.length > 0) {
+                const latest = withEmail[0];
+                const baseUrl = getBaseUrl(req);
+                sendMusicReadyEmailIfEligible(latest.sessionId, baseUrl, true).catch(console.error);
+                triggeredEmail = true;
+            } else {
+                missingEmailCount = insecurePhoneMatches.length;
+            }
+        }
+    }
 
-    const permanentItems = Array.from(paidMusicSessions.values())
-        .filter(matchesCustomer)
-        .map((session) => serializeMusicSession(session, session.sessionId));
+    if (triggeredEmail) {
+        return res.status(403).json({ error: "For your security, we just sent a magic link to your email to access your older songs." });
+    }
+    if (missingEmailCount > 0 && secureMatches.size === 0) {
+        return res.status(403).json({ error: "We found your songs, but we need your unique session link to show them. Please check the email we sent you when your song was ready." });
+    }
 
-    const items = [...tempItems, ...permanentItems]
-        .reduce((acc, item) => {
-            const existing = acc.get(item.session_id) || {};
-            acc.set(item.session_id, {
-                ...existing,
-                ...item,
-                paid: Boolean(item.paid || existing.paid),
-                is_permanent: Boolean(item.is_permanent || existing.is_permanent),
-                expires_at: item.expires_at || existing.expires_at || null,
-                paid_at: item.paid_at || existing.paid_at || null,
-            });
-            return acc;
-        }, new Map());
+    const itemsMap = new Map();
+    Array.from(secureMatches).forEach((session) => {
+        const item = serializeMusicSession(session, session.sessionId);
+        const existing = itemsMap.get(item.session_id) || {};
+        itemsMap.set(item.session_id, {
+            ...existing,
+            ...item,
+            paid: Boolean(item.paid || existing.paid),
+            is_permanent: Boolean(item.is_permanent || existing.is_permanent),
+            expires_at: item.expires_at || existing.expires_at || null,
+            paid_at: item.paid_at || existing.paid_at || null,
+        });
+    });
 
     return res.json({
         customer_key: customerKey || null,
         customer_phone: customerPhone || null,
-        items: Array.from(items.values())
+        items: Array.from(itemsMap.values())
             .sort((left, right) => new Date(right.updated_at || 0).getTime() - new Date(left.updated_at || 0).getTime()),
     });
 });
@@ -2771,13 +2888,22 @@ app.post("/api/payment/process", async (req, res) => {
             paypalOrderStatus: existing.paypalOrderStatus || null,
         });
 
-        const data = captureData && typeof captureData === "object" ? captureData : null;
-        if (!data) {
-            return res.status(400).json({ error: "capture_data is required." });
+        const accessToken = await getPayPalAccessToken();
+        const orderResponse = await fetch(`${getPayPalBaseUrl()}/v2/checkout/orders/${orderId}`, {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": "application/json",
+            },
+        });
+        const orderData = await orderResponse.json();
+
+        if (!orderResponse.ok) {
+            return res.status(400).json({ error: "Could not verify order with PayPal." });
         }
 
-        const status = data?.status || "";
-        const captureId = data?.purchase_units?.[0]?.payments?.captures?.[0]?.id || orderId;
+        const status = orderData.status || "";
+        const captureId = orderData.purchase_units?.[0]?.payments?.captures?.[0]?.id || orderId;
         const isPaid = status === "COMPLETED" || (PAYPAL_ENV === "sandbox" && status === "APPROVED");
 
         if (isPaid) {
@@ -2792,7 +2918,7 @@ app.post("/api/payment/process", async (req, res) => {
         return res.json({
             payment_id: captureId,
             status,
-            status_detail: data?.purchase_units?.[0]?.payments?.captures?.[0]?.status_details?.reason || null,
+            status_detail: orderData.purchase_units?.[0]?.payments?.captures?.[0]?.status_details?.reason || null,
             paid: isPaid,
         });
     } catch (error) {
