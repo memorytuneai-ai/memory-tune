@@ -4115,14 +4115,27 @@ body.memory-body .hero-logo-art {
 
 .hero-couple-visual {
     position: absolute;
-    top: -6px;
+    top: -10px;
     right: -20px;
-    width: 58%;
-    max-width: 250px;
-    height: 420px;
+    width: 62%;
+    max-width: 270px;
+    height: 450px;
     pointer-events: none;
     z-index: 1;
     overflow: visible;
+}
+
+/* Efeito Esfumado (Premium Fade) */
+.hero-couple-visual::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(to right, #faf6f0 0%, rgba(250,246,240,0.85) 25%, transparent 65%),
+        linear-gradient(to top, #faf6f0 0%, rgba(250,246,240,0.9) 22%, transparent 55%),
+        linear-gradient(to bottom, #faf6f0 0%, rgba(250,246,240,0.4) 10%, transparent 35%);
+    z-index: 1;
+    pointer-events: none;
 }
 
 .couple-photo-element {
@@ -4130,19 +4143,21 @@ body.memory-body .hero-logo-art {
     height: 100%;
     object-fit: cover;
     object-position: 70% 20%;
-    -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,1) 45%, rgba(0,0,0,0) 100%), linear-gradient(to top, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 25%);
-    mask-image: linear-gradient(to left, rgba(0,0,0,1) 45%, rgba(0,0,0,0) 100%), linear-gradient(to top, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 25%);
+    mask-image: radial-gradient(circle at 85% 30%, black 40%, transparent 75%);
+    -webkit-mask-image: radial-gradient(circle at 85% 30%, black 40%, transparent 75%);
+    filter: contrast(1.08) saturate(1.15) sepia(0.05);
 }
 
 .couple-overlay-script {
     position: absolute;
     right: 12px;
-    bottom: 45px;
+    bottom: 50px;
     color: #ffffff;
     font-family: 'Dancing Script', cursive;
-    font-size: 18px;
+    font-size: 19px;
+    font-weight: 700;
     line-height: 1.15;
-    text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+    text-shadow: 0 2px 6px rgba(0,0,0,0.6);
     transform: rotate(-6deg);
     text-align: right;
     z-index: 2;
@@ -4183,17 +4198,17 @@ body.memory-body .hero-logo-art {
 
 .hero-editorial-title {
     font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 38px;
-    font-weight: 600;
+    font-size: 40px;
+    font-weight: 700;
     line-height: 1.04;
-    color: #151515;
+    color: #0a0a0a;
     margin: 0 0 14px 0;
     letter-spacing: -0.5px;
 }
 
 .title-copper {
     color: #9b5c36;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .hero-editorial-desc {
@@ -4201,6 +4216,11 @@ body.memory-body .hero-logo-art {
     line-height: 1.45;
     color: #4e4844;
     margin: 0 0 16px 0;
+}
+
+.hero-editorial-desc strong {
+    color: #1a1a1a;
+    font-weight: 700;
 }
 
 .hero-callout-gift {
