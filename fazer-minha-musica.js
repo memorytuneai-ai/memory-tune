@@ -613,6 +613,25 @@ function setFloatingCtaHiddenOnMobile(isHidden) {
     floatingCta.classList.toggle("is-hidden-mobile", isHidden);
 }
 
+// Hide floating CTA when new-hero is visible so they don't overlap
+if (floatingCta) {
+    const heroSection = document.querySelector('.new-hero');
+    if (heroSection) {
+        const heroObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    floatingCta.style.opacity = '0';
+                    floatingCta.style.pointerEvents = 'none';
+                } else {
+                    floatingCta.style.opacity = '1';
+                    floatingCta.style.pointerEvents = 'auto';
+                }
+            });
+        }, { threshold: 0.1 });
+        heroObserver.observe(heroSection);
+    }
+}
+
 function renderOwnLyricsFlow(config) {
     lastOccasionConfig = config;
     lastFormValues = {
