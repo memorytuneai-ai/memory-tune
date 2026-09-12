@@ -267,6 +267,18 @@ async function applyStripeCheckoutSuccess(sessionId, checkoutSession, req) {
                 ? checkoutSession.payment_intent
                 : checkoutSession.payment_intent?.id || checkoutSession.id;
         markPaid(sessionId, { paymentId: paymentIntentId, status: "STRIPE_PAID" });
+
+        const latestForFB = getPaidMusicSession(sessionId) || getTempMusicSession(sessionId) || {};
+        sendFacebookCapiEvent("Purchase", req, {
+            email: latestForFB.customerEmail || checkoutSession.customer_details?.email || "",
+            phone: latestForFB.customerPhone || "",
+            name: latestForFB.clientName || checkoutSession.customer_details?.name || ""
+        }, {
+            value: checkoutSession.amount_total ? (checkoutSession.amount_total / 100) : getCheckoutPriceGbp(),
+            currency: (checkoutSession.currency || STRIPE_CURRENCY).toUpperCase(),
+            content_name: CHECKOUT_TITLE,
+            num_items: 1
+        });
     }
 
     const latest = getPaidMusicSession(sessionId) || getTempMusicSession(sessionId);
@@ -319,6 +331,58 @@ app.use(express.static(path.join(__dirname, "public"), { dotfiles: "deny" }));
 // Also serve specific static asset types from root (html served via routes only)
 app.use(express.static(__dirname, { dotfiles: "deny", index: false, extensions: ["css", "js", "jpeg", "jpg", "png", "ico", "svg", "webp", "mp3", "mp4", "woff", "woff2"] }));
 app.set("trust proxy", true);
+
+// Meta (Facebook) Conversions API
+const FB_PIXEL_ID = process.env.FB_PIXEL_ID || '1059417279668192';
+const FB_CAPI_TOKEN = process.env.FB_CAPI_TOKEN || '';
+
+function hashForFB(str) {
+    if (!str) return null;
+    return crypto.createHash('sha256').update(String(str).trim().toLowerCase()).digest('hex');
+}
+
+async function sendFacebookCapiEvent(eventName, req, userData = {}, customData = {}) {
+    if (!FB_CAPI_TOKEN) return; // Silent skip if no token provided in ENV
+    try {
+        let clientIpAddress = req ? (req.headers['x-forwarded-for'] || req.socket.remoteAddress) : null;
+        if (clientIpAddress && clientIpAddress.includes(',')) clientIpAddress = clientIpAddress.split(',')[0].trim();
+        let clientUserAgent = req ? req.headers['user-agent'] : null;
+
+        const eventPayload = {
+            data: [
+                {
+                    event_name: eventName,
+                    event_time: Math.floor(Date.now() / 1000),
+                    action_source: "website",
+                    event_source_url: req ? getBaseUrl(req) + (req.originalUrl || "") : "https://memorytune.co.uk",
+                    user_data: {
+                        client_ip_address: clientIpAddress,
+                        client_user_agent: clientUserAgent,
+                    },
+                    custom_data: customData,
+                }
+            ]
+        };
+
+        if (userData.email) eventPayload.data[0].user_data.em = [hashForFB(userData.email)];
+        if (userData.phone) eventPayload.data[0].user_data.ph = [hashForFB(userData.phone)];
+        if (userData.name) {
+            const parts = userData.name.trim().split(' ');
+            if (parts.length > 0) eventPayload.data[0].user_data.fn = [hashForFB(parts[0])];
+            if (parts.length > 1) eventPayload.data[0].user_data.ln = [hashForFB(parts.slice(1).join(' '))];
+        }
+
+        const response = await fetch(`https://graph.facebook.com/v19.0/${FB_PIXEL_ID}/events?access_token=${FB_CAPI_TOKEN}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(eventPayload)
+        });
+        const data = await response.json();
+        if (data.error) console.error("[FB CAPI Error]", data.error);
+    } catch (err) {
+        console.error("[FB CAPI Exception]", err);
+    }
+}
 
 function getPayPalBaseUrl() {
     return PAYPAL_ENV === "live"
@@ -2719,6 +2783,17 @@ app.post("/api/payment/stripe/create", async (req, res) => {
         let finalPrice = getCheckoutPriceGbp();
         const coupon = resolveCoupon(couponCode);
         finalPrice = calculateDiscountedPrice(finalPrice, coupon);
+
+        sendFacebookCapiEvent("InitiateCheckout", req, {
+            email: normalizedEmail,
+            phone: normalizedPhone,
+            name: clientName
+        }, {
+            value: finalPrice,
+            currency: STRIPE_CURRENCY.toUpperCase(),
+            content_name: CHECKOUT_TITLE,
+            num_items: 1
+        });
 
         const baseUrl = getBaseUrl(req);
 
