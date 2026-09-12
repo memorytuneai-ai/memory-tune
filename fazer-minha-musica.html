@@ -145,7 +145,10 @@
                     <!-- Price Card -->
                     <div class="hero-pricing-box">
                         <div class="pricing-box-left">
-                            <span class="pricing-label-kicker">YOUR SONG, JUST</span>
+                            <span class="pricing-label-kicker">
+                                <span style="text-decoration: line-through; opacity: 0.6; margin-right: 6px;">£14.99</span>
+                                <span style="color: #9b5c36; font-weight: 700;">LIMITED OFFER</span>
+                            </span>
                             <div class="pricing-val-wrap">
                                 <strong class="pricing-val-number">£9.90</strong>
                                 <div class="pricing-val-brush"></div>
@@ -153,6 +156,7 @@
                         </div>
                         <div class="pricing-box-divider"></div>
                         <div class="pricing-box-right">
+                            <div id="dynamic-promo-text" style="font-weight: 700; color: #9b5c36; margin-bottom: 4px;">Offer ends soon</div>
                             A one-of-a-kind song, made just for you.
                         </div>
                     </div>
@@ -607,5 +611,46 @@
 
     <script src="fazer-minha-musica.js"></script>
 
+    <script>
+        function updatePromoTimer() {
+            const now = new Date();
+            // Create target dates. Using 23:59:59 time for the deadline day.
+            const sep13 = new Date('2026-09-13T23:59:59-03:00');
+            const sep20 = new Date('2026-09-20T23:59:59-03:00');
+            
+            let targetDate = sep13;
+            let targetLabel = "Sep 13";
+            
+            if (now > sep13) {
+                targetDate = sep20;
+                targetLabel = "Sep 20";
+            }
+            
+            const distance = targetDate.getTime() - now.getTime();
+            
+            const promoTextEl = document.getElementById('dynamic-promo-text');
+            if (!promoTextEl) return;
+
+            if (distance > 0) {
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                
+                let timerStr = "";
+                if (days > 0) timerStr += days + "d ";
+                timerStr += hours.toString().padStart(2, '0') + "h ";
+                timerStr += minutes.toString().padStart(2, '0') + "m ";
+                timerStr += seconds.toString().padStart(2, '0') + "s";
+                
+                promoTextEl.innerHTML = `Offer ends ${targetLabel} <span style="display:inline-block; margin-left:6px; background:#f5ddd8; color: #6d4039; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; font-weight: 700; font-family: monospace;">⏱ ${timerStr}</span>`;
+            } else {
+                promoTextEl.innerHTML = "Limited time offer";
+            }
+        }
+        
+        setInterval(updatePromoTimer, 1000);
+        updatePromoTimer();
+    </script>
 </body>
 </html>
