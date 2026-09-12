@@ -50,11 +50,11 @@ const VALID_COUPONS = {
 };
 const ADMIN_SECRET = process.env.ADMIN_SECRET || "";
 
-const LEGACY_PAYPAL_PRICE_GBP = Number(process.env.PAYPAL_PRICE_GBP || 29.90);
+const LEGACY_PAYPAL_PRICE_GBP = Number(process.env.PAYPAL_PRICE_GBP || 9.90);
 const LEGACY_PAYPAL_CURRENCY = process.env.PAYPAL_CURRENCY || "GBP";
 const LEGACY_PAYPAL_TITLE = process.env.PAYPAL_TITLE || "Memory Tune personalised song";
 const CHECKOUT_TITLE = process.env.CHECKOUT_TITLE || process.env.STRIPE_TITLE || LEGACY_PAYPAL_TITLE;
-const getCheckoutPriceGbp = () => 29.90;
+const getCheckoutPriceGbp = () => 9.90;
 const STRIPE_CURRENCY = String(process.env.STRIPE_CURRENCY || "gbp").toLowerCase();
 const PAYPAL_PRICE_GBP = LEGACY_PAYPAL_PRICE_GBP;
 const PAYPAL_CURRENCY = LEGACY_PAYPAL_CURRENCY;

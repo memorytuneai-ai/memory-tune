@@ -147,7 +147,7 @@
                         <div class="pricing-box-left">
                             <span class="pricing-label-kicker">YOUR SONG, JUST</span>
                             <div class="pricing-val-wrap">
-                                <strong class="pricing-val-number">£14.99</strong>
+                                <strong class="pricing-val-number">£9.90</strong>
                                 <div class="pricing-val-brush"></div>
                             </div>
                         </div>
@@ -606,37 +606,6 @@
     <a href="#occasionStart" class="floating-cta">Create my song</a>
 
     <script src="fazer-minha-musica.js"></script>
-    <script>
-        function updatePromoCountdown() {
-            const endDate = new Date('2026-08-01T02:59:59Z').getTime(); // 23:59:59 Brazil time = 02:59:59Z next day
-            const now = new Date().getTime();
-            const distance = endDate - now;
 
-            if (distance < 0) {
-                document.querySelectorAll('.old-price').forEach(el => el.style.display = 'none');
-                document.querySelectorAll('.promo-countdown').forEach(el => el.style.display = 'none');
-                document.querySelectorAll('.price-kicker').forEach(el => el.style.display = 'none');
-                document.querySelectorAll('.price-display strong').forEach(el => el.innerText = '£14.99');
-                const el = document.getElementById('promo-countdown-timer');
-                if (el) el.innerHTML = "PROMO ENDED";
-                return;
-            }
-
-            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-            const display = (days > 0 ? days + "d " : "") + 
-                            hours.toString().padStart(2, '0') + "h " + 
-                            minutes.toString().padStart(2, '0') + "m " + 
-                            seconds.toString().padStart(2, '0') + "s";
-
-            const el = document.getElementById('promo-countdown-timer');
-            if (el) el.innerHTML = display;
-        }
-        setInterval(updatePromoCountdown, 1000);
-        updatePromoCountdown();
-    </script>
 </body>
 </html>

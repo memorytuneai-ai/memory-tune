@@ -1164,9 +1164,9 @@ form?.addEventListener("input", () => {
 });
 
 const PROMO_END = new Date("2026-08-01T02:59:59Z").getTime();
-const IS_PROMO = Date.now() < PROMO_END;
-const CHECKOUT_VALUE = IS_PROMO ? 9.90 : 14.99;
-const CHECKOUT_PRICE_TEXT = IS_PROMO ? "£9.90" : "£14.99";
+const IS_PROMO = false;
+const CHECKOUT_VALUE = 9.90;
+const CHECKOUT_PRICE_TEXT = "£9.90";
 const CHECKOUT_ITEM = {
     item_id: "memory-tune-personalised-song",
     item_name: "Memory Tune personalised song",
