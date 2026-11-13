@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Song Studio | Memory Tune</title>
+    <meta name="description" content="Personalised song creation studio in 5 simple steps. Turn your real story into music.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&family=Dancing+Script:wght@400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="questionario.css?v=20261113-v1">
+    <link rel="icon" type="image/jpeg" href="memory-tune-tab-logo.jpeg?v=20260515-tablogo">
+    <link rel="shortcut icon" href="memory-tune-tab-logo.jpeg?v=20260515-tablogo">
+    <link rel="apple-touch-icon" href="memory-tune-tab-logo.jpeg?v=20260515-tablogo">
+    <meta name="robots" content="noindex, follow">
+    <meta name="theme-color" content="#121212">
+
+    <!-- Meta Pixel Code -->
+    <script>
+        !function (f, b, e, v, n, t, s) {
+            if (f.fbq) return; n = f.fbq = function () {
+                n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+            };
+            if (!f._fbq) f._fbq = n;
+            n.push = n;
+            n.loaded = !0;
+            n.version = '2.0';
+            n.queue = [];
+            t = b.createElement(e);
+            t.async = !0;
+            t.src = v;
+            s = b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t, s);
+        }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '1059417279668192');
+        fbq('track', 'PageView');
+    </script>
+    <noscript>
+        <img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1059417279668192&ev=PageView&noscript=1" />
+    </noscript>
+
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-3GKYBLVHQP"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-3GKYBLVHQP');
+    </script>
+</head>
+
+<body class="stepper-body">
+    <!-- Top Bar -->
+    <header class="studio-header">
+        <div class="container studio-topbar">
+            <a href="/" class="brand-link" title="Return to home">
+                <img src="logo.png?v=memorytune-20260510" alt="Memory Tune" class="brand-logo" onerror="this.style.display='none'">
+                <div class="brand-title-block">
+                    <span class="brand-main-text">MEMORY TUNE</span>
+                    <span class="brand-sub-text">SONG STUDIO</span>
+                </div>
+            </a>
+            <div class="topbar-actions">
+                <span id="draftSaveIndicator" class="draft-indicator"><i class="fa-solid fa-cloud-arrow-up"></i> Draft saved</span>
+                <a href="/my-songs" class="my-songs-pill"><i class="fa-solid fa-music"></i> My songs</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Stepper Navigation Header (Fixed/Sticky) -->
+    <nav class="stepper-nav" aria-label="Creation Steps">
+        <div class="container stepper-container">
+            <div class="stepper-track">
+                <div class="stepper-progress-line" id="stepperLine" style="width: 10%;"></div>
+
+                <div class="step-node is-active" data-step="1">
+                    <div class="step-circle"><span class="step-num">1</span><i class="fa-solid fa-check step-check"></i></div>
+                    <span class="step-title">Story & Details</span>
+                </div>
+
+                <div class="step-node" data-step="2">
+                    <div class="step-circle"><span class="step-num">2</span><i class="fa-solid fa-check step-check"></i></div>
+                    <span class="step-title">Style & Voice</span>
+                </div>
+
+                <div class="step-node" data-step="3">
+                    <div class="step-circle"><span class="step-num">3</span><i class="fa-solid fa-check step-check"></i></div>
+                    <span class="step-title">AI Lyrics</span>
+                </div>
+
+                <div class="step-node" data-step="4">
+                    <div class="step-circle"><span class="step-num">4</span><i class="fa-solid fa-check step-check"></i></div>
+                    <span class="step-title">Production</span>
+                </div>
+
+                <div class="step-node" data-step="5">
+                    <div class="step-circle"><span class="step-num">5</span><i class="fa-solid fa-check step-check"></i></div>
+                    <span class="step-title">Unlock & Master</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container for Funnel Steps -->
+    <main class="container studio-main">
+        <!-- ========================================== -->
+        <!-- STEP 1: Story & Details (or Ready Lyrics)  -->
+        <!-- ========================================== -->
+        <section class="step-panel is-visible" id="stepPanel1" data-panel="1">
+            <div class="step-card">
+                <div class="step-header-box">
+                    <div class="step-tag-row">
+                        <span class="step-pill">Step 1 of 5</span>
+                        <div class="occasion-selector-inline">
+                            <label for="occasionSelect">Occasion:</label>
+                            <select id="occasionSelect" class="clean-select">
+                                <option value="romantic-song">💖 Romantic Song</option>
+                                <option value="aniversario">🎂 Birthday</option>
+                                <option value="casamento">💍 Marriage proposal</option>
+                                <option value="revelacao">👶 Baby arrival</option>
+                                <option value="homenagem">🕊️ Tribute & Gratitude</option>
+                                <option value="desculpa">🤍 Apology & Reconciliation</option>
+                                <option value="letraPronta">✍️ I already have the lyrics</option>
+                            </select>
+                        </div>
+                    </div>
+                    <h1 class="step-main-title" id="step1Title">Tell us your story</h1>
+                    <p class="step-desc" id="step1Intro">The details you share will give life, emotion and authentic memories to your song.</p>
+                </div>
+
+                <form id="step1Form" class="step-form-grid">
+                    <!-- Dynamic questionnaire fields injected here via JS -->
+                    <div id="step1DynamicFields" class="form-fields-wrapper"></div>
+
+                    <!-- Actions -->
+                    <div class="step-actions-footer">
+                        <a href="/" class="btn-step-secondary"><i class="fa-solid fa-arrow-left"></i> Home</a>
+                        <button type="submit" class="btn-step-primary" id="btnStep1Continue">
+                            <span>Save & Choose Style</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- STEP 2: Music Style & Voice Preference     -->
+        <!-- ========================================== -->
+        <section class="step-panel" id="stepPanel2" data-panel="2" hidden>
+            <div class="step-card">
+                <div class="step-header-box">
+                    <span class="step-pill">Step 2 of 5</span>
+                    <h2 class="step-main-title">Choose style & vocal tone</h2>
+                    <p class="step-desc">Pick the genre that best reflects your feelings. You can listen to samples below.</p>
+                </div>
+
+                <!-- Genre Cards with Interactive Audio Preview -->
+                <div class="genre-grid-selection" id="genreSelectionGrid">
+                    <!-- Cards will be populated and can play demo snippets -->
+                </div>
+
+                <!-- Voice Selection Section -->
+                <div class="voice-selection-box">
+                    <h3 class="subsection-title"><i class="fa-solid fa-microphone-lines"></i> Preferred Voice</h3>
+                    <p class="subsection-subtitle">Select the vocal interpretation that feels right for this story.</p>
+                    <div class="voice-cards-row">
+                        <label class="voice-card is-selected" data-voice="female">
+                            <input type="radio" name="voiceGender" value="female" checked>
+                            <div class="voice-card-content">
+                                <div class="voice-icon-circle"><i class="fa-solid fa-venus"></i></div>
+                                <strong>Female Voice</strong>
+                                <span>Warm, emotional & expressive</span>
+                            </div>
+                        </label>
+                        <label class="voice-card" data-voice="male">
+                            <input type="radio" name="voiceGender" value="male">
+                            <div class="voice-card-content">
+                                <div class="voice-icon-circle"><i class="fa-solid fa-mars"></i></div>
+                                <strong>Male Voice</strong>
+                                <span>Deep, gentle & heartfelt</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="step-actions-footer">
+                    <button type="button" class="btn-step-secondary" id="btnBackToStep1"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                    <button type="button" class="btn-step-primary" id="btnStep2Continue">
+                        <span>Compose Lyrics with AI</span>
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- STEP 3: AI Lyrics Composition & Editing    -->
+        <!-- ========================================== -->
+        <section class="step-panel" id="stepPanel3" data-panel="3" hidden>
+            <div class="step-card">
+                <!-- Lyrics Loading Animation Overlay -->
+                <div class="lyrics-loading-overlay" id="lyricsLoadingOverlay" hidden>
+                    <div class="loading-animation-container">
+                        <div class="music-notes-pulse">
+                            <i class="fa-solid fa-music note-1"></i>
+                            <i class="fa-solid fa-heart note-2"></i>
+                            <i class="fa-solid fa-compact-disc note-3"></i>
+                        </div>
+                        <h3 class="loading-headline" id="lyricsLoadingMessage">Composing your song...</h3>
+                        <p class="loading-subline">Our AI songwriter is weaving your names, memories and feelings into melody.</p>
+                        <div class="loading-progress-bar">
+                            <div class="loading-bar-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-header-box">
+                    <span class="step-pill">Step 3 of 5</span>
+                    <h2 class="step-main-title">Review & refine your lyrics</h2>
+                    <p class="step-desc">Your song is organised in 5 key sections. Feel free to edit words, tweak names, or click regenerate.</p>
+                </div>
+
+                <!-- 5 Editable Song Blocks -->
+                <div class="lyrics-blocks-container" id="lyricsBlocksContainer">
+                    <div class="lyric-block-card">
+                        <div class="lyric-block-header">
+                            <span class="lyric-badge">[Verse 1]</span>
+                            <span class="lyric-hint">Sets the beginning of your story</span>
+                        </div>
+                        <textarea class="lyric-textarea" id="lyricBlock1" rows="3" placeholder="Writing verse 1..."></textarea>
+                    </div>
+
+                    <div class="lyric-block-card highlight-chorus">
+                        <div class="lyric-block-header">
+                            <span class="lyric-badge chorus-badge">[Chorus]</span>
+                            <span class="lyric-hint">The emotional heart of the song</span>
+                        </div>
+                        <textarea class="lyric-textarea" id="lyricBlockChorus" rows="3" placeholder="Writing chorus..."></textarea>
+                    </div>
+
+                    <div class="lyric-block-card">
+                        <div class="lyric-block-header">
+                            <span class="lyric-badge">[Verse 2]</span>
+                            <span class="lyric-hint">Deepens details and memorable moments</span>
+                        </div>
+                        <textarea class="lyric-textarea" id="lyricBlock2" rows="3" placeholder="Writing verse 2..."></textarea>
+                    </div>
+
+                    <div class="lyric-block-card">
+                        <div class="lyric-block-header">
+                            <span class="lyric-badge">[Bridge]</span>
+                            <span class="lyric-hint">A tender transition before the climax</span>
+                        </div>
+                        <textarea class="lyric-textarea" id="lyricBlockBridge" rows="3" placeholder="Writing bridge..."></textarea>
+                    </div>
+
+                    <div class="lyric-block-card">
+                        <div class="lyric-block-header">
+                            <span class="lyric-badge">[Final]</span>
+                            <span class="lyric-hint">A lasting closing phrase that echoes forever</span>
+                        </div>
+                        <textarea class="lyric-textarea" id="lyricBlockFinal" rows="3" placeholder="Writing final..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Customer Contact Details for Order & WhatsApp Delivery -->
+                <div class="contact-details-box">
+                    <h3 class="contact-box-title"><i class="fa-solid fa-bell"></i> Where should we send your finished song?</h3>
+                    <p class="contact-box-desc">Enter your WhatsApp and email so you can recover your song anytime.</p>
+                    <div class="contact-inputs-grid">
+                        <div class="input-group">
+                            <label for="clientPhoneInput"><i class="fa-brands fa-whatsapp"></i> WhatsApp Number</label>
+                            <input type="tel" id="clientPhoneInput" placeholder="+44 7123 456789 or +55 11 9..." required>
+                            <small class="field-hint">Include country code (e.g. +44 or +55)</small>
+                        </div>
+                        <div class="input-group">
+                            <label for="clientEmailInput"><i class="fa-regular fa-envelope"></i> E-mail Address</label>
+                            <input type="email" id="clientEmailInput" placeholder="your.name@example.com" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Controls -->
+                <div class="step-actions-footer">
+                    <button type="button" class="btn-step-secondary" id="btnBackToStep2"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                    <button type="button" class="btn-step-outline" id="btnRegenerateLyrics"><i class="fa-solid fa-arrows-rotate"></i> Regenerate Lyrics</button>
+                    <button type="button" class="btn-step-primary" id="btnStep3Continue">
+                        <span>Approve & Produce Music</span>
+                        <i class="fa-solid fa-music"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- STEP 4: Music Production & Dual Players    -->
+        <!-- ========================================== -->
+        <section class="step-panel" id="stepPanel4" data-panel="4" hidden>
+            <div class="step-card">
+                <div class="step-header-box">
+                    <span class="step-pill">Step 4 of 5</span>
+                    <h2 class="step-main-title" id="productionTitle">Producing your two tracks</h2>
+                    <p class="step-desc" id="productionDesc">Our AI audio studio is rendering two distinct musical interpretations of your lyrics.</p>
+                </div>
+
+                <!-- Live Production Status Tracker -->
+                <div class="production-status-box" id="productionStatusBox">
+                    <div class="production-spinner-pulse">
+                        <i class="fa-solid fa-headphones"></i>
+                    </div>
+                    <div class="production-text-wrap">
+                        <strong id="productionStatusText">Rendering audio tracks in the studio...</strong>
+                        <span id="productionEtaText">Estimated time: ~2 minutes</span>
+                    </div>
+                    <div class="studio-meter-bar">
+                        <div class="studio-meter-fill" id="studioMeterFill"></div>
+                    </div>
+                </div>
+
+                <!-- Dual Music Players (Progressive Unlock: Version 1 unlocks first!) -->
+                <div class="dual-players-grid">
+                    <!-- Version 1 Player Card -->
+                    <div class="spotify-track-card" id="playerCard1">
+                        <div class="album-art-wrap">
+                            <img src="couple-bg.jpg" alt="Album Cover Version 1" class="album-art-img">
+                            <div class="album-version-badge">Version 1</div>
+                            <button type="button" class="play-btn-circle" id="playBtn1" disabled aria-label="Play Track 1">
+                                <i class="fa-solid fa-play"></i>
+                            </button>
+                        </div>
+                        <div class="track-info">
+                            <h3 class="track-title" id="trackTitle1">Personal Song — Version 1</h3>
+                            <span class="track-artist">Memory Tune Studio &bull; Preview</span>
+                            <div class="track-custom-progress">
+                                <span class="time-current" id="timeCurrent1">0:00</span>
+                                <div class="progress-bar-bg" id="progressBg1">
+                                    <div class="progress-bar-fill" id="progressFill1"></div>
+                                </div>
+                                <span class="time-duration" id="timeDuration1">0:40</span>
+                            </div>
+                            <audio id="audioEl1" preload="none" controlsList="nodownload noplaybackrate" disablePictureInPicture oncontextmenu="return false;"></audio>
+                            <div class="track-preview-notice" id="previewNotice1" hidden>
+                                <span><i class="fa-solid fa-lock"></i> Complimentary preview ended. Unlock full HD Master.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Version 2 Player Card -->
+                    <div class="spotify-track-card" id="playerCard2">
+                        <div class="album-art-wrap">
+                            <img src="couple-sunset.jpg" alt="Album Cover Version 2" class="album-art-img">
+                            <div class="album-version-badge">Version 2</div>
+                            <button type="button" class="play-btn-circle" id="playBtn2" disabled aria-label="Play Track 2">
+                                <i class="fa-solid fa-play"></i>
+                            </button>
+                        </div>
+                        <div class="track-info">
+                            <h3 class="track-title" id="trackTitle2">Personal Song — Version 2</h3>
+                            <span class="track-artist">Memory Tune Studio &bull; Preview</span>
+                            <div class="track-custom-progress">
+                                <span class="time-current" id="timeCurrent2">0:00</span>
+                                <div class="progress-bar-bg" id="progressBg2">
+                                    <div class="progress-bar-fill" id="progressFill2"></div>
+                                </div>
+                                <span class="time-duration" id="timeDuration2">0:40</span>
+                            </div>
+                            <audio id="audioEl2" preload="none" controlsList="nodownload noplaybackrate" disablePictureInPicture oncontextmenu="return false;"></audio>
+                            <div class="track-preview-notice" id="previewNotice2" hidden>
+                                <span><i class="fa-solid fa-lock"></i> Complimentary preview ended. Unlock full HD Master.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step Actions -->
+                <div class="step-actions-footer">
+                    <button type="button" class="btn-step-primary btn-advance-checkout" id="btnStep4Continue" disabled>
+                        <span>Unlock Full HD Masters</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- STEP 5: Unlock & Checkout (Master HD)      -->
+        <!-- ========================================== -->
+        <section class="step-panel" id="stepPanel5" data-panel="5" hidden>
+            <div class="step-card checkout-master-card">
+                <div class="step-header-box text-center">
+                    <span class="step-pill">Step 5 of 5 &bull; Complete</span>
+                    <h2 class="step-main-title">Unlock Your Master Quality Songs</h2>
+                    <p class="step-desc">Your personalised tracks are ready. Unlock both complete versions in studio-grade high definition.</p>
+                </div>
+
+                <div class="master-offer-layout">
+                    <!-- Left: Deliverables list -->
+                    <div class="master-deliverables">
+                        <div class="offer-deliverable-item">
+                            <div class="check-icon-circle"><i class="fa-solid fa-check"></i></div>
+                            <div>
+                                <strong>Both Full Master Audio Tracks (No limits)</strong>
+                                <p>Unrestricted full-length high-fidelity MP3 files of both unique versions.</p>
+                            </div>
+                        </div>
+                        <div class="offer-deliverable-item">
+                            <div class="check-icon-circle"><i class="fa-solid fa-check"></i></div>
+                            <div>
+                                <strong>Lifetime Customer Access & Instant Downloads</strong>
+                                <p>Re-download anytime in the "My Songs" area using your WhatsApp.</p>
+                            </div>
+                        </div>
+                        <div class="offer-deliverable-item">
+                            <div class="check-icon-circle"><i class="fa-solid fa-check"></i></div>
+                            <div>
+                                <strong>Formatted Lyrics Certificate</strong>
+                                <p>A printable, elegant commemorative lyric keepsake to frame or gift.</p>
+                            </div>
+                        </div>
+                        <div class="offer-deliverable-item">
+                            <div class="check-icon-circle"><i class="fa-solid fa-check"></i></div>
+                            <div>
+                                <strong>100% Personal & Commercial Rights</strong>
+                                <p>Use it at your wedding, celebration, social media or keep as a family heirloom.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Price & Checkout Action -->
+                    <div class="master-checkout-box">
+                        <div class="price-header-row">
+                            <span class="offer-badge-pill">LIMITED TIME PROMO</span>
+                            <div class="pricing-display-group">
+                                <span class="price-old">£14.99</span>
+                                <span class="price-main">£9.90</span>
+                            </div>
+                            <span class="price-subtext">Single payment &bull; Immediate unlock</span>
+                        </div>
+
+                        <button type="button" class="btn-checkout-stripe" id="btnStripeCheckout">
+                            <i class="fa-solid fa-lock"></i>
+                            <span>Unlock Both Songs (£9.90)</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+
+                        <div class="checkout-guarantees">
+                            <span><i class="fa-solid fa-shield-halved"></i> 256-bit Encrypted Checkout</span>
+                            <span><i class="fa-brands fa-stripe"></i> Powered by Stripe</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Studio Footer -->
+    <footer class="studio-footer">
+        <div class="container footer-container">
+            <span>&copy; 2026 Memory Tune. All rights reserved.</span>
+            <div class="footer-links">
+                <a href="/terms-and-conditions.html" target="_blank">Terms</a>
+                <a href="/privacy-policy.html" target="_blank">Privacy</a>
+                <a href="/delivery-and-support.html" target="_blank">Support</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="questionario.js?v=20261113-v1"></script>
+</body>
+</html>

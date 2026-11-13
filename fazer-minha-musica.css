@@ -4619,3 +4619,46 @@ body.memory-body .hero-logo-art {
         font-size: 11px;
     }
 }
+
+
+/* Occasion Card Links for Index */
+.occasion-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    height: 100%;
+    transition: transform 0.25s ease;
+}
+.occasion-card-link:hover {
+    transform: translateY(-4px);
+}
+.occasion-card-link .occasion-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    border: 1px solid rgba(184, 115, 51, 0.2);
+}
+.occasion-card-link:hover .occasion-card {
+    border-color: rgba(184, 115, 51, 0.6);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+}
+.occasion-select-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 14px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #e09f67;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+.occasion-card-link:hover .occasion-select-btn {
+    color: #f7b988;
+    transform: translateX(4px);
+}
+.occasion-card-highlight {
+    background: linear-gradient(145deg, rgba(38, 28, 24, 0.8), rgba(20, 18, 17, 0.95)) !important;
+    border: 1px solid rgba(224, 159, 103, 0.4) !important;
+}

@@ -95,7 +95,19 @@ try {
 }
 
 app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "fazer-minha-musica.html"));
+    res.sendFile(path.join(__dirname, "index.html"));
+});
+
+app.get("/index.html", (req, res) => {
+    res.redirect(301, "/");
+});
+
+app.get("/questionario", (req, res) => {
+    res.sendFile(path.join(__dirname, "questionario.html"));
+});
+
+app.get("/questionario.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "questionario.html"));
 });
 
 app.get("/my-songs", (req, res) => {
@@ -103,7 +115,7 @@ app.get("/my-songs", (req, res) => {
 });
 
 app.get("/create-song", (req, res) => {
-    res.redirect(301, "/");
+    res.redirect(301, "/questionario");
 });
 
 app.get("/terms", (req, res) => {

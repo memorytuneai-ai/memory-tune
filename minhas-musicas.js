@@ -758,12 +758,13 @@ function renderLibraryItem(item) {
 
     const paidDownloadButtons = item.paid
         ? `
-                <button type="button" class="btn btn-outline" data-action="download-1">Download version 1</button>
-                <button type="button" class="btn btn-outline" data-action="download-2">Download version 2</button>
+                <button type="button" class="btn btn-outline" data-action="download-1">Download version 1 (HD)</button>
+                <button type="button" class="btn btn-outline" data-action="download-2">Download version 2 (HD)</button>
                 ${getVideoButton(1, item.video_url_1, item.video_task_id_1)}
                 ${getVideoButton(2, item.video_url_2, item.video_task_id_2)}
+                <button type="button" class="btn btn-outline" data-action="download-lyrics-pdf"><i class="fa-solid fa-file-pdf"></i> Download Lyrics (PDF)</button>
           `
-        : "";
+        : (item.lyrics ? `<button type="button" class="btn btn-outline" data-action="download-lyrics-pdf"><i class="fa-solid fa-file-pdf"></i> View Lyrics (PDF)</button>` : "");
 
     const audioControlsAttrs = item.paid ? "" : 'controlsList="nodownload noplaybackrate" disablePictureInPicture';
 
@@ -862,6 +863,12 @@ function bindLibraryActions() {
             }
         });
 
+        const lyricsBtn = card.querySelector('[data-action="download-lyrics-pdf"]');
+        lyricsBtn?.addEventListener("click", () => {
+            const item = currentLibraryItems.find((entry) => entry.session_id === sessionId);
+            if (item) printLyricsPdf(item);
+        });
+
         const setupVideoActions = (version) => {
             const genBtn = card.querySelector(`[data-action="generate-video-${version}"]`);
             const dlBtn = card.querySelector(`[data-action="download-video-${version}"]`);
@@ -942,6 +949,121 @@ async function pollVideoStatus(sessionId, version, videoTaskId, btnElement) {
         console.error("Polling error:", err);
         setTimeout(() => pollVideoStatus(sessionId, version, videoTaskId, btnElement), 10000);
     }
+}
+
+function printLyricsPdf(item) {
+    const printWindow = window.open("", "_blank", "width=800,height=900");
+    if (!printWindow) {
+        alert("Please allow popups to download your lyrics PDF.");
+        return;
+    }
+
+    const title = escapeHtml(item.title || "Personalised Song");
+    const occasion = escapeHtml(item.occasion || "Special Occasion");
+    const clientName = escapeHtml(item.client_name || "");
+    const date = formatDate(item.created_at || new Date().toISOString());
+    const lyricsHtml = (item.lyrics || "")
+        .split("\n")
+        .map((line) => {
+            const trimmed = line.trim();
+            if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                return `<h3 style="color: #b87333; margin: 20px 0 6px; font-size: 1.15rem; letter-spacing: 0.05em; text-transform: uppercase;">${escapeHtml(trimmed)}</h3>`;
+            }
+            return `<p style="margin: 4px 0; line-height: 1.6; font-size: 1.05rem;">${escapeHtml(trimmed)}</p>`;
+        })
+        .join("");
+
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>${title} - Lyrics - Memory Tune</title>
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Manrope:wght@400;600&display=swap" rel="stylesheet">
+            <style>
+                @page { size: A4; margin: 18mm; }
+                body {
+                    font-family: 'Cormorant Garamond', Georgia, serif;
+                    background: #fff;
+                    color: #1a1a1a;
+                    padding: 30px;
+                    margin: 0;
+                }
+                .container {
+                    max-width: 680px;
+                    margin: 0 auto;
+                    border: 2px solid #e0c8b3;
+                    border-radius: 12px;
+                    padding: 40px;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+                }
+                .header {
+                    text-align: center;
+                    border-bottom: 1px solid #eee;
+                    padding-bottom: 24px;
+                    margin-bottom: 24px;
+                }
+                .brand {
+                    font-family: 'Manrope', sans-serif;
+                    font-size: 12px;
+                    letter-spacing: 0.2em;
+                    color: #b87333;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                }
+                h1 {
+                    font-size: 32px;
+                    margin: 8px 0 4px;
+                    color: #222;
+                    font-weight: 600;
+                }
+                .meta {
+                    font-size: 14px;
+                    color: #777;
+                    font-family: 'Manrope', sans-serif;
+                }
+                .lyrics-body {
+                    margin: 20px 0;
+                    text-align: center;
+                }
+                .footer {
+                    margin-top: 36px;
+                    padding-top: 20px;
+                    border-top: 1px solid #eee;
+                    text-align: center;
+                    font-family: 'Manrope', sans-serif;
+                    font-size: 11px;
+                    color: #999;
+                }
+                @media print {
+                    body { padding: 0; }
+                    .container { border: 1px solid #ddd; box-shadow: none; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <div class="brand">Memory Tune &bull; Personalised Song</div>
+                    <h1>${title}</h1>
+                    <div class="meta">${occasion} ${clientName ? '&bull; For ' + clientName : ''} &bull; ${date}</div>
+                </div>
+                <div class="lyrics-body">
+                    ${lyricsHtml}
+                </div>
+                <div class="footer">
+                    Created with love by Memory Tune &bull; memorytune.co.uk
+                </div>
+            </div>
+            <script>
+                window.onload = function() {
+                    window.print();
+                };
+            </script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
 }
 
 let currentLibraryItems = [];
